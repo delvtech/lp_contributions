@@ -1,0 +1,10 @@
+pandas
+psycopg2-binary
+altair
+altair_saver
+duckdb
+jupytext
+matplotlib
+requests
+sqlalchemy
+python-dotenv
