@@ -13,10 +13,8 @@ from datetime import datetime, timedelta, date
 from run_query import run_query
 
 # read from csv
-element_trades = pd.read_csv("./element_trades.csv")
 element_liquidity = pd.read_csv("./element_liquidity.csv")
 element_transfers = pd.read_csv("./element_transfers.csv")
-element_deposits = pd.read_csv("./element_depositors.csv")
 
 # fix usd value
 element_liquidity["price"] = (
@@ -27,10 +25,8 @@ element_liquidity["deposit_size_base_usd"] = (
 )
 
 # add to pql
-pql.register(element_trades, "trades")
 pql.register(element_liquidity, "liquidity")
 pql.register(element_transfers, "transfers")
-pql.register(element_deposits, "deposits")
 
 # lp token names, used for yield token addresses later
 lp_token_names = pd.DataFrame(
