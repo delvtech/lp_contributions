@@ -13,7 +13,7 @@ from datetime import datetime, timedelta, date
 from run_query import run_query
 
 # read from csv
-element_liquidity = pd.read_csv("./element_liquidity.csv")
+element_liquidity = pd.read_csv("./element_liquidity_concatenated.csv")
 element_transfers = pd.read_csv("./element_transfers.csv")
 
 # fix usd value
@@ -229,6 +229,7 @@ listOfDoubleAddresses = list(
 )
 listOfDoubleAddresses = listOfDoubleAddresses[1:]
 
+# find instances where liquidityProvider is a smart contract
 whereIn = "('" + pd.Series([i for i in listOfDoubleAddresses]).str.cat(sep="','") + "')"
 sql = """
 select namespace, name, abi::varchar, address::varchar, code::varchar, base, dynamic, updated_at, created_at, id, factory from ethereum."contracts" ec
@@ -238,9 +239,9 @@ where ec.address IN {}
 )
 ethereum_contracts = run_query(sql)
 
+# give credit to the smart contract instead of the signer
 for n, row in ethereum_contracts.iterrows():
     idxAffectedRows = lp_events.liquidityProvider == row.address
-    r = lp_events.loc[idxAffectedRows, "address"]
     lp_events.loc[idxAffectedRows, "address"] = lp_events.loc[
         idxAffectedRows, "liquidityProvider"
     ]
@@ -290,6 +291,7 @@ def build_token_index(lp_events):
     pool_index = {}
     # for storing bad addresses to be investigated later (withdraw before deposit)
     bad_address = []
+    bad_address_zero_balance = []
 
     # iterate according to:
     # ORDER BY datetime ASC, tx_index ASC, evt_index ASC
@@ -362,10 +364,12 @@ def build_token_index(lp_events):
                 continue
 
             elif event_type == "send":
-                print("WARNING: send before receive")
-                bad_address.append(address)
-                print(address)
-                continue
+                # freak out only if it's not the zero address
+                if address != "\\x0000000000000000000000000000000000000000":
+                    print("WARNING: send before receive")
+                    bad_address.append(address)
+                    print(address)
+                continue  # in all cases continue
 
             else:
                 raise Exception("unknown event_type: {}".format(event_type))
@@ -416,10 +420,16 @@ def build_token_index(lp_events):
                 )
 
                 # token change is explicitly negative in a withdraw
-                usd_balance_withdrawn = (
-                    token_change / last_row["rolling_token_balance"]
-                ) * last_row["rolling_usd_balance"]
-                new_row["usd_change"] = usd_balance_withdrawn  # for tracking only
+                if last_row["rolling_token_balance"] == 0:
+                    print("WARNING: token balance is zero")
+                    print(last_row)
+                    bad_address_zero_balance.append(address)
+                    usd_balance_withdrawn = 0
+                else:
+                    usd_balance_withdrawn = (
+                        token_change / last_row["rolling_token_balance"]
+                    ) * last_row["rolling_usd_balance"]
+                    new_row["usd_change"] = usd_balance_withdrawn  # for tracking only
 
                 # so we add to decrement
                 new_row["rolling_usd_balance"] = (
@@ -439,10 +449,16 @@ def build_token_index(lp_events):
                 )
 
                 # calculate the dollar equivalency of the sent tokens
-                usd_balance_sent = (
-                    token_change / last_row["rolling_token_balance"]
-                ) * last_row["rolling_usd_balance"]
-                new_row["usd_change"] = usd_balance_sent  # for tracking only
+                if last_row["rolling_token_balance"] == 0:
+                    print("WARNING: token balance is zero")
+                    print(last_row)
+                    bad_address_zero_balance.append(address)
+                    usd_balance_sent = 0
+                else:
+                    usd_balance_sent = (
+                        token_change / last_row["rolling_token_balance"]
+                    ) * last_row["rolling_usd_balance"]
+                    new_row["usd_change"] = usd_balance_sent  # for tracking only
 
                 # calculate the new usd balance
                 new_row["rolling_usd_balance"] = (
@@ -511,10 +527,13 @@ def build_token_index(lp_events):
             ].strftime("%Y-%m-%d %H:%M:%S")
 
             address_token_index[address][token_name].append(new_row)
-    return (address_token_index, bad_address)
+    return (address_token_index, bad_address, bad_address_zero_balance)
 
 
-address_token_index, bad_address = build_token_index(lp_events)
+address_token_index, bad_address, bad_address_zero_balance = build_token_index(
+    lp_events
+)
+print("bad addresses: \n", bad_address_zero_balance)
 # reconstitute events from the index into a table
 lp_events_usd_credit = pd.DataFrame(
     [
