@@ -286,7 +286,7 @@ order by 1 desc
 on day_series.day = prices.date_trunc
 ) corrected
 order by 1 asc
-)
+),
 
 
 --All Element Add/Remove Liquidity Events
