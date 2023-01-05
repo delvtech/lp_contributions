@@ -291,6 +291,7 @@ order by 1 asc
 
 --All Element Add/Remove Liquidity Events
 
+liquidity_data as (
 --Dai Pools (ePyvDAI-16OCT21,eYyvDAI-16OCT21,ePyvDAI-28JAN22,eYyvDAI-28JAN22,ePyvDAI-29APR22,eYyvDAI-29APR22)
 select evt_block_time, evt_block_number, et."from" as liquidity_provider, 'ePyvDAI-16OCT21' as e_asset, 'LPePyvDAI-16OCT21' as lp_token,
 deltas[1]/10^18 as deposit_size_base, deltas[1]/10^18*dai_prices.dai_price as deposit_size_base_usd, deltas[2]/10^18 as deposit_size_e_asset,
@@ -1813,3 +1814,6 @@ on date_trunc('minute', evt_block_time) = peth.minute
 where "poolId" = '\x28b0379d98fb80da460c190c95f97c74302214b10002000000000000000003c0'
 and deltas[2] <> 0
 order by evt_block_time desc
+)
+
+select evt_block_time,evt_block_number,liquidity_provider::varchar,e_asset,lp_token,deposit_size_base,deposit_size_base_usd,deposit_size_e_asset,lp_tokens_acquired,tx_fee_eth,tx_fee_usd,evt_tx_hash::varchar,nonce,"index",tx_index from liquidity_data

@@ -1,3 +1,4 @@
+with transfers_data as (
 select * from
 (
 select block_time, block_number, 'ePyvcrvSTETH-15OCT21' as token, substring(topic2, 13, 20) as "sender", substring(topic3, 13, 20) as "recipient",
@@ -463,3 +464,6 @@ and topic1 = '\xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef
 --Exclude mints and burns by the Balancer contract
 where "sender" not in ('\x0000000000000000000000000000000000000000', '\xba12222222228d8ba445958a75a0704d566bf2c8') 
 and "recipient" not in ('\x0000000000000000000000000000000000000000', '\xba12222222228d8ba445958a75a0704d566bf2c8')
+)
+
+select block_time,block_number,token,sender::varchar,recipient::varchar,tokens_transferred,tx_hash::varchar,"index",tx_index from transfers_data
