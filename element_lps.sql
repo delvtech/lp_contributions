@@ -450,7 +450,34 @@ on date_trunc('minute', evt_block_time) = peth.minute
 where "poolId" = '\x8ffd1dc7c3ef65f833cf84dbcd15b6ad7f9c54ec000200000000000000000199'
 and deltas[2] <> 0
 union all
---USDC Pools (ePyvUSDC-29OCT21,eYyvUSDC-29OCT21,ePyvUSDC-28JAN22,eYyvUSDC-28JAN22,ePyvUSDC-29APR22,eYyvUSDC-29APR22)
+select evt_block_time, evt_block_number, et."from" as liquidity_provider, 'ePyvDAI-24FEB23' as e_asset, 'LPePyvDAI-24FEB23' as lp_token,
+deltas[2]/10^18 as deposit_size_base, deltas[2]/10^18*dai_prices.dai_price as deposit_size_base_usd, deltas[1]/10^18 as deposit_size_e_asset,
+case when el."topic2" = '\x0000000000000000000000000000000000000000000000000000000000000000' then bytea2numericpy(substring(el.data FROM 1 FOR 32))/10^18 else bytea2numericpy(substring(el.data FROM 1 FOR 32))*-1/10^18 end as lp_tokens_acquired,
+case when et."type" = 'DynamicFee' then (eb.base_fee_per_gas+et.max_priority_fee_per_gas)*et.gas_used/10^18 else (et.gas_price*et.gas_used)/10^18 end as tx_fee_eth,
+case when et."type" = 'DynamicFee' then (eb.base_fee_per_gas+et.max_priority_fee_per_gas)*et.gas_used/10^18*peth.price else (et.gas_price*et.gas_used)/10^18*peth.price end as tx_fee_usd,
+evt_tx_hash, et.nonce, bv.evt_index as "index", et.index as "tx_index"
+from balancer_v2."Vault_evt_PoolBalanceChanged" bv
+left join (
+select * from ethereum.logs
+where contract_address = '\x7f4a33dee068c4fa012d64677c61519a578dfa35' --LPePyvDAI-24FEB23
+and topic1 = '\xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
+and bytea2numericpy(substring(data FROM 1 FOR 32)) > 0
+and topic3 <> '\x000000000000000000000000654be0b5556f8eadbc2d140505445fa32715ef2b'
+and (topic3 <> '\x0000000000000000000000000000000000000000000000000000000000000000' or topic2 <> '\x0000000000000000000000000000000000000000000000000000000000000000')
+) el
+on el.tx_hash = bv.evt_tx_hash
+left join ethereum.transactions et
+on et.hash = bv.evt_tx_hash
+left join ethereum.blocks eb
+on et.block_number = eb."number"
+left join dai_prices
+on dai_prices.minute = date_trunc('minute', evt_block_time)
+left join (select * from prices.usd where symbol = 'WETH') peth
+on date_trunc('minute', evt_block_time) = peth.minute
+where "poolId" = '\x7f4a33dee068c4fa012d64677c61519a578dfa35000200000000000000000346'
+and deltas[2] <> 0
+union all
+--USDC Pools (ePyvUSDC-29OCT21,eYyvUSDC-29OCT21,ePyvUSDC-28JAN22,eYyvUSDC-28JAN22,ePyvUSDC-29APR22,eYyvUSDC-29APR22,ePyvUSDC-16SEP22)
 select evt_block_time, evt_block_number, et."from" as liquidity_provider, 'ePyvUSDC-29OCT21' as e_asset, 'LPePyvUSDC-29OCT21' as lp_token,
 deltas[1]/10^6 as deposit_size_base, deltas[1]/10^6*usdc_prices.usdc_price as deposit_size_base_usd, deltas[2]/10^6 as deposit_size_e_asset,
 case when el."topic2" = '\x0000000000000000000000000000000000000000000000000000000000000000' then bytea2numericpy(substring(el.data FROM 1 FOR 32))/10^18 else bytea2numericpy(substring(el.data FROM 1 FOR 32))*-1/10^18 end as lp_tokens_acquired,
@@ -692,6 +719,33 @@ on usdc_prices.minute = date_trunc('minute', evt_block_time)
 left join (select * from prices.usd where symbol = 'WETH') peth
 on date_trunc('minute', evt_block_time) = peth.minute
 where "poolId" = '\x56df5ef1a0a86c2a5dd9cc001aa8152545bdbdec000200000000000000000168'
+and deltas[2] <> 0
+union all
+select evt_block_time, evt_block_number, et."from" as liquidity_provider, bv."liquidityProvider", 'ePyvUSDC-24FEB23' as e_asset, 'LPePyvUSDC-24FEB23' as lp_token,
+deltas[2]/10^6 as deposit_size_base, deltas[2]/10^6*usdc_prices.usdc_price as deposit_size_base_usd, deltas[1]/10^6 as deposit_size_e_asset,
+case when el."topic2" = '\x0000000000000000000000000000000000000000000000000000000000000000' then bytea2numericpy(substring(el.data FROM 1 FOR 32))/10^18 else bytea2numericpy(substring(el.data FROM 1 FOR 32))*-1/10^18 end as lp_tokens_acquired,
+case when et."type" = 'DynamicFee' then (eb.base_fee_per_gas+et.max_priority_fee_per_gas)*et.gas_used/10^18 else (et.gas_price*et.gas_used)/10^18 end as tx_fee_eth,
+case when et."type" = 'DynamicFee' then (eb.base_fee_per_gas+et.max_priority_fee_per_gas)*et.gas_used/10^18*peth.price else (et.gas_price*et.gas_used)/10^18*peth.price end as tx_fee_usd,
+evt_tx_hash, et.nonce, bv.evt_index as "index", et.index as "tx_index"
+from balancer_v2."Vault_evt_PoolBalanceChanged" bv
+left join (
+select * from ethereum.logs
+where contract_address = '\x5746afd392b13946aacbda40317751db27d8b918' --LPePyvUSDC-24FEB23
+and topic1 = '\xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
+and bytea2numericpy(substring(data FROM 1 FOR 32)) > 0
+and topic3 <> '\x000000000000000000000000654be0b5556f8eadbc2d140505445fa32715ef2b'
+and (topic3 <> '\x0000000000000000000000000000000000000000000000000000000000000000' or topic2 <> '\x0000000000000000000000000000000000000000000000000000000000000000')
+) el
+on el.tx_hash = bv.evt_tx_hash
+left join ethereum.transactions et
+on et.hash = bv.evt_tx_hash
+left join ethereum.blocks eb
+on et.block_number = eb."number"
+left join usdc_prices
+on usdc_prices.minute = date_trunc('minute', evt_block_time)
+left join (select * from prices.usd where symbol = 'WETH') peth
+on date_trunc('minute', evt_block_time) = peth.minute
+where "poolId" = '\x5746afd392b13946aacbda40317751db27d8b91800020000000000000000034c'
 and deltas[2] <> 0
 union all
 --WBTC Pools (ePyvWBTC-26NOV21,eYyvWBTC-26NOV21,ePyvWBTC-29APR22,eYyvWBTC-29APR22)
@@ -991,6 +1045,33 @@ on steth_lp_prices.date_trunc = date_trunc('day', evt_block_time)
 left join (select * from prices.usd where symbol = 'WETH') peth
 on date_trunc('minute', evt_block_time) = peth.minute
 where "poolId" = '\xabb93e3787b984cb62dcd962af8732f52ff57586000200000000000000000183'
+and deltas[1] <> 0
+union all
+select evt_block_time, evt_block_number, et."from" as liquidity_provider, 'ePyvcrvSTETH-24FEB23' as e_asset, 'LPePyvcrvSTETH-24FEB23' as lp_token,
+deltas[1]/10^18 as deposit_size_base, deltas[1]/10^18*steth_lp_prices.steth_lp_token as deposit_size_base_usd, deltas[2]/10^18 as deposit_size_e_asset,
+case when el."topic2" = '\x0000000000000000000000000000000000000000000000000000000000000000' then bytea2numericpy(substring(el.data FROM 1 FOR 32))/10^18 else bytea2numericpy(substring(el.data FROM 1 FOR 32))*-1/10^18 end as lp_tokens_acquired,
+case when et."type" = 'DynamicFee' then (eb.base_fee_per_gas+et.max_priority_fee_per_gas)*et.gas_used/10^18 else (et.gas_price*et.gas_used)/10^18 end as tx_fee_eth,
+case when et."type" = 'DynamicFee' then (eb.base_fee_per_gas+et.max_priority_fee_per_gas)*et.gas_used/10^18*peth.price else (et.gas_price*et.gas_used)/10^18*peth.price end as tx_fee_usd,
+evt_tx_hash, et.nonce, bv.evt_index as "index", et.index as "tx_index"
+from balancer_v2."Vault_evt_PoolBalanceChanged" bv
+left join (
+select * from ethereum.logs
+where contract_address = '\x07f589ea6b789249c83992dd1ed324c3b80fd06b' --LPePyvcrvSTETH-24FEB23
+and topic1 = '\xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
+and bytea2numericpy(substring(data FROM 1 FOR 32)) > 0
+and topic3 <> '\x000000000000000000000000654be0b5556f8eadbc2d140505445fa32715ef2b'
+and (topic3 <> '\x0000000000000000000000000000000000000000000000000000000000000000' or topic2 <> '\x0000000000000000000000000000000000000000000000000000000000000000')
+) el
+on el.tx_hash = bv.evt_tx_hash
+left join ethereum.transactions et
+on et.hash = bv.evt_tx_hash
+left join ethereum.blocks eb
+on et.block_number = eb."number"
+left join steth_lp_prices
+on steth_lp_prices.date_trunc = date_trunc('day', evt_block_time)
+left join (select * from prices.usd where symbol = 'WETH') peth
+on date_trunc('minute', evt_block_time) = peth.minute
+where "poolId" = '\x07f589ea6b789249c83992dd1ed324c3b80fd06b00020000000000000000034e'
 and deltas[1] <> 0
 union all
 --lusd3crv-f Pools (ePyvCurveLUSD-28SEP21,eYyvCurveLUSD-28SEP21,ePyvCurveLUSD-27DEC21,eYyvCurveLUSD-27DEC21,ePyvCurveLUSD-29APR22,eYyvCurveLUSD-29APR22)
@@ -1301,7 +1382,7 @@ evt_tx_hash, et.nonce, bv.evt_index as "index", et.index as "tx_index"
 from balancer_v2."Vault_evt_PoolBalanceChanged" bv
 left join (
 select * from ethereum.logs
-where contract_address = '\x63e9b50dd3eb63bfbf93b26f57b9efb574e59576' --LPePyvCurve-alUSD-29APR22
+where contract_address = '\x13cf9e8115f35828a26062b6c05a56c72f54e0c6' --LPePyvCurve-alUSD-16SEP22
 and topic1 = '\xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
 and bytea2numericpy(substring(data FROM 1 FOR 32)) > 0
 and topic3 <> '\x000000000000000000000000654be0b5556f8eadbc2d140505445fa32715ef2b'
@@ -1672,5 +1753,32 @@ on tricrypto2_lp_prices.date_trunc = date_trunc('day', evt_block_time)
 left join (select * from prices.usd where symbol = 'WETH') peth
 on date_trunc('minute', evt_block_time) = peth.minute
 where "poolId" = '\xc80fef22fccc277ac0ffea84d111888a767f717e0002000000000000000001b1'
+and deltas[2] <> 0
+union all
+select evt_block_time, evt_block_number, et."from" as liquidity_provider, 'ePyvBalancer-BoostedAaveUSD-04MAY23' as e_asset, 'LPePyvBalancer-BoostedAaveUSD-04MAY23' as lp_token,
+deltas[2]/10^18 as deposit_size_base, deltas[2]/10^18*bbausd_lp_prices.bbausd_lp_token as deposit_size_base_usd, deltas[1]/10^18 as deposit_size_e_asset,
+case when el."topic2" = '\x0000000000000000000000000000000000000000000000000000000000000000' then bytea2numericpy(substring(el.data FROM 1 FOR 32))/10^18 else bytea2numericpy(substring(el.data FROM 1 FOR 32))*-1/10^18 end as lp_tokens_acquired,
+case when et."type" = 'DynamicFee' then (eb.base_fee_per_gas+et.max_priority_fee_per_gas)*et.gas_used/10^18 else (et.gas_price*et.gas_used)/10^18 end as tx_fee_eth,
+case when et."type" = 'DynamicFee' then (eb.base_fee_per_gas+et.max_priority_fee_per_gas)*et.gas_used/10^18*peth.price else (et.gas_price*et.gas_used)/10^18*peth.price end as tx_fee_usd,
+evt_tx_hash, et.nonce, bv.evt_index as "index", et.index as "tx_index"
+from balancer_v2."Vault_evt_PoolBalanceChanged" bv
+left join (
+select * from ethereum.logs
+where contract_address = '\x28b0379d98fb80da460c190c95f97c74302214b1' --LPePyvBalancer-BoostedAaveUSD-04MAY23
+and topic1 = '\xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
+and bytea2numericpy(substring(data FROM 1 FOR 32)) > 0
+and topic3 <> '\x000000000000000000000000654be0b5556f8eadbc2d140505445fa32715ef2b' -- excludes transfers TO the element deployer address
+and (topic3 <> '\x0000000000000000000000000000000000000000000000000000000000000000' or topic2 <> '\x0000000000000000000000000000000000000000000000000000000000000000') -- ensure either to or from is not null
+) el
+on el.tx_hash = bv.evt_tx_hash
+left join ethereum.transactions et
+on et.hash = bv.evt_tx_hash
+left join ethereum.blocks eb
+on et.block_number = eb."number"
+left join bbausd_lp_prices
+on bbausd_lp_prices.date_trunc = date_trunc('day', evt_block_time)
+left join (select * from prices.usd where symbol = 'WETH') peth
+on date_trunc('minute', evt_block_time) = peth.minute
+where "poolId" = '\x28b0379d98fb80da460c190c95f97c74302214b10002000000000000000003c0'
 and deltas[2] <> 0
 order by evt_block_time desc
