@@ -255,6 +255,37 @@ where symbol = 'WBTC'
 and date_trunc('day', minute) >= '2021-06-28'
 group by 1
 order by 1 desc
+),
+
+bbausd_lp_prices as (
+select day as date_trunc, first_value(bbausd_lp_token) over (partition by grp order by bbausd_lp_token desc nulls last) as bbausd_lp_token from
+( -- START corrected)
+select day, bbausd_lp_token, sum(case when bbausd_lp_token is not null then 1 end) over (order by day) as grp from day_series
+left join
+( -- START prices, calculate 50th percentile per day
+select date_trunc('day', block_time), PERCENTILE_CONT(0.5) WITHIN GROUP(ORDER BY lp_token_price) as "bbausd_lp_token" from (
+--BBAUSD AddLiquidity events
+select el.evt_block_time as block_time, el.evt_tx_hash as tx_hash, 1 as stable_price, minting.lp_tokens,
+(deltas[1]/10^18 + deltas[2]/10^18)*1/minting.lp_tokens as lp_token_price
+from balancer_v2."Vault_evt_PoolBalanceChanged" el
+left join
+(
+select *, value/10^18 as lp_tokens from erc20."ERC20_evt_Transfer"
+where "from" = '\x0000000000000000000000000000000000000000'
+and "value" <> 0
+and date_trunc('day', evt_block_time) >= '2021-06-28'
+and "contract_address" = '\x28b0379d98fb80da460c190c95f97c74302214b1'
+) minting
+on minting.evt_tx_hash = el.evt_tx_hash
+where date_trunc('day', el.evt_block_time) >= '2021-06-28'
+order by 1 desc
+) bbausd
+group by 1
+order by 1 desc
+) prices
+on day_series.day = prices.date_trunc
+) corrected
+order by 1 asc
 )
 
 
@@ -721,7 +752,7 @@ on date_trunc('minute', evt_block_time) = peth.minute
 where "poolId" = '\x56df5ef1a0a86c2a5dd9cc001aa8152545bdbdec000200000000000000000168'
 and deltas[2] <> 0
 union all
-select evt_block_time, evt_block_number, et."from" as liquidity_provider, bv."liquidityProvider", 'ePyvUSDC-24FEB23' as e_asset, 'LPePyvUSDC-24FEB23' as lp_token,
+select evt_block_time, evt_block_number, et."from" as liquidity_provider, 'ePyvUSDC-24FEB23' as e_asset, 'LPePyvUSDC-24FEB23' as lp_token,
 deltas[2]/10^6 as deposit_size_base, deltas[2]/10^6*usdc_prices.usdc_price as deposit_size_base_usd, deltas[1]/10^6 as deposit_size_e_asset,
 case when el."topic2" = '\x0000000000000000000000000000000000000000000000000000000000000000' then bytea2numericpy(substring(el.data FROM 1 FOR 32))/10^18 else bytea2numericpy(substring(el.data FROM 1 FOR 32))*-1/10^18 end as lp_tokens_acquired,
 case when et."type" = 'DynamicFee' then (eb.base_fee_per_gas+et.max_priority_fee_per_gas)*et.gas_used/10^18 else (et.gas_price*et.gas_used)/10^18 end as tx_fee_eth,
