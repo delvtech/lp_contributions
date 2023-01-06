@@ -26,6 +26,14 @@ element_liquidity["deposit_size_base_usd"] = (
 
 # get token names
 token_names = pd.read_csv("element_tokens.csv")
+# add token name to element transfers
+element_transfers = pd.merge(
+    element_transfers,
+    token_names.loc[:, ["token_address_raw", "token_name"]],
+    how="left",
+    left_on="contract_address",
+    right_on="token_address_raw",
+).rename(columns={"token_name": "token"})
 
 # token mappings
 contract_url = "https://raw.githubusercontent.com/element-fi/elf-deploy/main/addresses/mainnet.json"
@@ -55,6 +63,7 @@ token_expiry = token_expiry.loc[
 pql.register(token_expiry, "token_expiry")
 
 # rename liquidity data to match onchain token names
+print("renaming liquidity data to match onchain token names")
 old_names = [
     "LPePyvcrvSTETH-16SEP22",
     "LPePyvcrvSTETH-24FEB23",
@@ -173,6 +182,7 @@ listOfDoubleAddresses = list(
 listOfDoubleAddresses = listOfDoubleAddresses[1:]
 
 # replace signer with sender for these contracts
+print("replacing signer with sender for these contracts")
 n = 0
 for double_address in listOfDoubleAddresses:
     idxAffectedRows = lp_events.liquidityProvider == double_address
@@ -616,5 +626,14 @@ lp_usd_seconds_per_user = pql.q(
     lp_usd_seconds_per_user_query.format(text="effective_date")
 )
 pql.register(lp_usd_seconds_per_user, "lp_usd_seconds_per_user")
+
+lp_usd_seconds_per_user.lp_usd_seconds_share = (
+    lp_usd_seconds_per_user.lp_usd_seconds_share
+    / sum(lp_usd_seconds_per_user.lp_usd_seconds_share)
+)
+print(
+    f"total share of lp_usd_seconds adds up to {lp_usd_seconds_per_user.lp_usd_seconds_share.sum()}"
+    f" (should be 1.0 but python floats are weird)"
+)
 
 lp_usd_seconds_per_user.to_csv("lp_usd_seconds_per_user.csv", index=False)
