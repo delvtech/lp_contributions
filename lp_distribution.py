@@ -13,7 +13,7 @@ from datetime import datetime, timedelta, date
 from run_query import run_query
 
 # read from csv
-element_liquidity = pd.read_csv("./element_liquidity_concatenated.csv")
+element_liquidity = pd.read_csv("./element_liquidity.csv")
 element_transfers = pd.read_csv("./element_transfers.csv")
 
 # fix usd value
@@ -52,7 +52,6 @@ token_expiry = pd.merge(tokens_from_github, token_names, on="token_address_raw")
 token_expiry = token_expiry.loc[
     :, ["token_address_raw", "token_name", "expiry_timestamp", "expiry_datetime"]
 ]
-display(token_expiry.head(1))
 pql.register(token_expiry, "token_expiry")
 
 # rename liquidity data to match onchain token names
