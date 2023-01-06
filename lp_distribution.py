@@ -24,38 +24,18 @@ element_liquidity["deposit_size_base_usd"] = (
     element_liquidity["lp_tokens_acquired"] * element_liquidity["price"]
 )
 
-# add to pql
-pql.register(element_liquidity, "liquidity")
-pql.register(element_transfers, "transfers")
-
-# lp token names, used for yield token addresses later
-lp_token_names = pd.DataFrame(
-    re.findall(r"\'(.*)\'.*--(.*)", open("element_transfers.sql", "r").read()),
-    columns=["token_address_raw", "token_name"],
-)
-lp_token_names["token_address_raw"] = lp_token_names["token_address_raw"].str.lower()
-pql.register(lp_token_names, "lp_token_names")
+# get token names
+token_names = pd.read_csv("element_tokens.csv")
 
 # token mappings
 contract_url = "https://raw.githubusercontent.com/element-fi/elf-deploy/main/addresses/mainnet.json"
 element_token_mappings = requests.get(contract_url).json()
-tokens = []
+tokens_from_github = []
 for token, data in element_token_mappings["tranches"].items():
     for tranche in data:
-        tokens.append(
-            {
-                "expiry_timestamp": tranche["expiration"],
-                "expiry_datetime": datetime.fromtimestamp(
-                    tranche["expiration"]
-                ).strftime("%Y-%m-%d %H:%M:%S"),
-                "token_address_raw": "\\" + tranche["address"][1:].lower(),
-                "token": token,
-                "token_type": "pToken",
-            }
-        )
         for token_type in ("ptPool", "ytPool"):
             if token_type in tranche:
-                tokens.append(
+                tokens_from_github.append(
                     {
                         "expiry_timestamp": tranche["expiration"],
                         "expiry_datetime": datetime.fromtimestamp(
@@ -63,77 +43,41 @@ for token, data in element_token_mappings["tranches"].items():
                         ).strftime("%Y-%m-%d %H:%M:%S"),
                         "token_address_raw": "\\"
                         + tranche[token_type]["address"][1:].lower(),
-                        "token": token,
-                        "token_type": token_type,
+                        "token_type": "LPeP" if token_type == "ptPool" else "LPeY",
                         "poolId": "\\" + tranche[token_type]["poolId"][1:].lower(),
                     }
                 )
-tokens = pd.DataFrame(tokens)
-pql.register(tokens, "token_expiry_stg")
-
-# failed joins, which are mappings missing from the Element deployment file on Github
-# so we bring them back in from `lp_token_names` (the `element_transfers.sql` file)
-failed_token_name_joins = pql.q(
-    """
-WITH a AS (
- SELECT token_name,
-        lp_token_names.token_address_raw AS token_address_raw,
-        token_expiry_stg.token_address_raw AS github_token_address_raw
-   FROM lp_token_names
-   LEFT OUTER JOIN token_expiry_stg
-     ON lp_token_names.token_address_raw = token_expiry_stg.token_address_raw
-)
-
-SELECT token_name,
-       REPLACE(token_name, 'eY', 'eP') AS mirror_principal_token_name,
-       token_address_raw
-  FROM a
- WHERE github_token_address_raw IS NULL
- ORDER BY 1 DESC
-"""
-)
-pql.register(failed_token_name_joins, "failed_token_name_joins")
-
-# we lack proper addresses for the yield tokens so we join them in awkwardly here
-# now we have a table that describes all Element tokens and their expiries
-token_expiry = pql.q(
-    """
-WITH successful_token_expiry AS (
-
- SELECT lp_token_names.token_address_raw,
-        token_name,
-        expiry_timestamp,
-        expiry_datetime
-   FROM lp_token_names
-  INNER JOIN token_expiry_stg
-     ON lp_token_names.token_address_raw = token_expiry_stg.token_address_raw
-
-),
-
-failed_joins_repaired AS (
-
- SELECT failed_token_name_joins.token_address_raw,
-        failed_token_name_joins.token_name,
-        expiry_timestamp,
-        expiry_datetime
-   FROM failed_token_name_joins
-  INNER JOIN successful_token_expiry
-     ON failed_token_name_joins.mirror_principal_token_name = successful_token_expiry.token_name
-
-)
-
-SELECT *
-  FROM successful_token_expiry
-  
- UNION ALL
- 
-SELECT *
-  FROM failed_joins_repaired
-  
- ORDER BY expiry_datetime DESC
-"""
-)
+tokens_from_github = pd.DataFrame(tokens_from_github)
+token_expiry = pd.merge(tokens_from_github, token_names, on="token_address_raw")
+token_expiry = token_expiry.loc[
+    :, ["token_address_raw", "token_name", "expiry_timestamp", "expiry_datetime"]
+]
+display(token_expiry.head(1))
 pql.register(token_expiry, "token_expiry")
+
+# rename liquidity data to match onchain token names
+old_names = [
+    "LPePyvcrvSTETH-16SEP22",
+    "LPePyvcrvSTETH-24FEB23",
+    "LPePyvCurveLUSD-16SEP22",
+    "LPePyvcrv3crypto-16SEP22",
+]
+new_names = [
+    "LPePyvCurve-stETH-16SEP22",
+    "LPePyvCurve-stETH-24FEB23",
+    "LPePyvCurve-LUSD-16SEP22",
+    "LPePyvCurve-3Crypto-16SEP22",
+]
+for idx in range(len(old_names)):
+    rows_to_replace = element_liquidity.lp_token == old_names[idx]
+    element_liquidity.loc[rows_to_replace, "lp_token"] = new_names[idx]
+    print(
+        f"replaced {sum(rows_to_replace):2g} rows for {old_names[idx]:24s} with {new_names[idx]:27s}"
+    )
+
+# add to pql
+pql.register(element_liquidity, "liquidity")
+pql.register(element_transfers, "transfers")
 
 # the `lp_events` table contains all events related to Element LP tokens
 # and contains expiry metadata for each related token
@@ -229,22 +173,23 @@ listOfDoubleAddresses = list(
 )
 listOfDoubleAddresses = listOfDoubleAddresses[1:]
 
-# find instances where liquidityProvider is a smart contract
-whereIn = "('" + pd.Series([i for i in listOfDoubleAddresses]).str.cat(sep="','") + "')"
-sql = """
-select namespace, name, abi::varchar, address::varchar, code::varchar, base, dynamic, updated_at, created_at, id, factory from ethereum."contracts" ec
-where ec.address IN {}
-""".format(
-    whereIn
-)
-ethereum_contracts = run_query(sql)
-
-# give credit to the smart contract instead of the signer
-for n, row in ethereum_contracts.iterrows():
-    idxAffectedRows = lp_events.liquidityProvider == row.address
+# replace signer with sender for these contracts
+n = 0
+for double_address in listOfDoubleAddresses:
+    idxAffectedRows = lp_events.liquidityProvider == double_address
+    different_rows = sum(
+        lp_events.loc[idxAffectedRows, "address"]
+        != lp_events.loc[idxAffectedRows, "liquidityProvider"]
+    )
+    n += different_rows
+    print(
+        f"overwriting liquidity_provider address for {double_address}"
+        f"for {different_rows} rows"
+    )
     lp_events.loc[idxAffectedRows, "address"] = lp_events.loc[
         idxAffectedRows, "liquidityProvider"
     ]
+print(f"total affected rows replaced: {n}. nice!")
 
 # what's the most recent timestamp in the LP data? used later
 max_datetime = pql.q("SELECT MAX(datetime) FROM lp_events")["MAX(datetime)"][0]
@@ -273,17 +218,14 @@ def build_token_index(lp_events):
     the "credit value" of the tokens even upon transfer
     """
 
-    EARLY_BIRD_BONUS = 1.1  # 10%
-    EARLY_BIRD_USD_THRESHOLD = 2000000  # 2 million
-    EARLY_BIRD_TIME_DELTA = timedelta(days=10)  # 10 days
+    EARLY_BIRD_BONUS = 1.0  # 0%
+    EARLY_BIRD_USD_THRESHOLD = 0 * 1e6  # 0 million
+    EARLY_BIRD_TIME_DELTA = timedelta(days=0)  # 0 days
 
     # for storing full rows for a given address, token pair
     address_token_index = defaultdict(dict)
     # for storing the cumulative deposits (and not withdrawals) to a pool
     pool_index = {}
-
-    # iterate according to:
-    # ORDER BY datetime ASC, tx_index ASC, evt_index ASC
 
     # for storing full rows for a given address, token pair
     address_token_index = defaultdict(dict)
@@ -301,6 +243,9 @@ def build_token_index(lp_events):
         address = new_row["address"]
         event_type = new_row["event_type"]
         token_name = new_row["token_name"]
+        if token_name is None:
+            display("warning: none token name:")
+            display(new_row)
         token_change = new_row["token_change"]
         usd_change = new_row["usd_change"]
         event_datetime = new_row["datetime"]
@@ -533,7 +478,12 @@ def build_token_index(lp_events):
 address_token_index, bad_address, bad_address_zero_balance = build_token_index(
     lp_events
 )
-print("bad addresses: \n", bad_address_zero_balance)
+if len(bad_address_zero_balance) > 0:
+    print("bad addresses with zero balance: \n", bad_address_zero_balance)
+    pd.DataFrame(bad_address_zero_balance).to_csv(
+        "bad_address_zero_balance.csv", index=False, header=False
+    )
+
 # reconstitute events from the index into a table
 lp_events_usd_credit = pd.DataFrame(
     [
