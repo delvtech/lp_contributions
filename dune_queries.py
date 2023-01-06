@@ -10,7 +10,7 @@ from run_query import run_query
 
 # Element liquidity
 start_time = time.time()
-sql_query = run_query(open("./element_lps.sql").read())
+sql_query = run_query(open("./element_liquidity.sql").read())
 element_liquidity = pd.DataFrame(sql_query)
 print(f"liquidity took {(time.time() - start_time):0.1f}s seconds, ")
 element_liquidity.to_csv("./element_liquidity.csv", index=False)

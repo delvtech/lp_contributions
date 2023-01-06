@@ -1,6 +1,17 @@
+--------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------
+-- SECTION ONE: get prices
+--------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------
 with day_series as (
 SELECT generate_series('2021-06-28'::TIMESTAMP, date_trunc('day', NOW()), '1 day') AS day
 ),
+
+--------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------
+-- SECTION TWO: get prices
+--------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------
 
 steth_lp_prices as (
 select day as date_trunc, first_value(steth_lp_token) over (partition by grp order by steth_lp_token desc nulls last) as steth_lp_token from
@@ -9,7 +20,9 @@ select day, steth_lp_token, sum(case when steth_lp_token is not null then 1 end)
 left join
 (
 select date_trunc('day', block_time), PERCENTILE_CONT(0.5) WITHIN GROUP(ORDER BY lp_token_price) as "steth_lp_token" from (
+--------------------------------------------------------------------------------------------------------------------------------------------------
 --stETH AddLiquidity events
+--------------------------------------------------------------------------------------------------------------------------------------------------
 select evt_block_time as block_time, el.evt_tx_hash as tx_hash, token_amounts[1]/10^18 as eth_deposits,
 token_amounts[2]/10^18 as steth_deposits, p.price as eth_price, minting.lp_tokens,
 (token_amounts[1]/10^18 + token_amounts[2]/10^18)*p.price/minting.lp_tokens as lp_token_price
@@ -42,7 +55,9 @@ select day, lusd_lp_token, sum(case when lusd_lp_token is not null then 1 end) o
 left join
 (
 select date_trunc('day', block_time), PERCENTILE_CONT(0.5) WITHIN GROUP(ORDER BY lp_token_price) as "lusd_lp_token" from (
+--------------------------------------------------------------------------------------------------------------------------------------------------
 --LUSD AddLiquidity events
+--------------------------------------------------------------------------------------------------------------------------------------------------
 select evt_block_time as block_time, el.evt_tx_hash as tx_hash, token_amounts[1]/10^18 as lusd_deposits,
 token_amounts[2]/10^18 as crv3_deposits, 1 as stable_price, minting.lp_tokens,
 (token_amounts[1]/10^18 + token_amounts[2]/10^18)*1/minting.lp_tokens as lp_token_price
@@ -73,7 +88,9 @@ select day, eurs_lp_token, sum(case when eurs_lp_token is not null then 1 end) o
 left join
 (
 select date_trunc('day', block_time), PERCENTILE_CONT(0.5) WITHIN GROUP(ORDER BY lp_token_price) as "eurs_lp_token" from (
+--------------------------------------------------------------------------------------------------------------------------------------------------
 --EURS AddLiquidity events
+--------------------------------------------------------------------------------------------------------------------------------------------------
 select evt_block_time as block_time, el.evt_tx_hash as tx_hash, token_amounts[1]/10^2 as eurs_deposits,
 token_amounts[2]/10^18 as seur_deposits, p.price as eurs_price, minting.lp_tokens,
 (token_amounts[1]/10^2 + token_amounts[2]/10^18)*p.price/minting.lp_tokens as lp_token_price
@@ -106,7 +123,9 @@ select day, alusd_lp_token, sum(case when alusd_lp_token is not null then 1 end)
 left join
 (
 select date_trunc('day', block_time), PERCENTILE_CONT(0.5) WITHIN GROUP(ORDER BY lp_token_price) as "alusd_lp_token" from (
+--------------------------------------------------------------------------------------------------------------------------------------------------
 --ALUSD AddLiquidity events
+--------------------------------------------------------------------------------------------------------------------------------------------------
 select evt_block_time as block_time, el.evt_tx_hash as tx_hash, token_amounts[1]/10^18 as alusd_deposits,
 token_amounts[2]/10^18 as crv3_deposits, 1 as stable_price, minting.lp_tokens,
 (token_amounts[1]/10^18 + token_amounts[2]/10^18)*1/minting.lp_tokens as lp_token_price
@@ -137,7 +156,9 @@ select day, mim_lp_token, sum(case when mim_lp_token is not null then 1 end) ove
 left join
 (
 select date_trunc('day', block_time), PERCENTILE_CONT(0.5) WITHIN GROUP(ORDER BY lp_token_price) as "mim_lp_token" from (
+--------------------------------------------------------------------------------------------------------------------------------------------------
 --MIM AddLiquidity events
+--------------------------------------------------------------------------------------------------------------------------------------------------
 select evt_block_time as block_time, el.evt_tx_hash as tx_hash, token_amounts[1]/10^18 as mim_deposits,
 token_amounts[2]/10^18 as crv3_deposits, 1 as stable_price, minting.lp_tokens,
 (token_amounts[1]/10^18 + token_amounts[2]/10^18)*1/minting.lp_tokens as lp_token_price
@@ -168,7 +189,9 @@ select day, tricrypto_lp_token, sum(case when tricrypto_lp_token is not null the
 left join
 (
 select date_trunc('day', block_time), PERCENTILE_CONT(0.5) WITHIN GROUP(ORDER BY lp_token_price) as "tricrypto_lp_token" from (
+--------------------------------------------------------------------------------------------------------------------------------------------------
 --tricrypto AddLiquidity events
+--------------------------------------------------------------------------------------------------------------------------------------------------
 select evt_block_time as block_time, el.evt_tx_hash as tx_hash, token_amounts[1]/10^6 as tether_deposits,
 token_amounts[2]/10^8 as wbtc_deposits, token_amounts[3]/10^18 as weth_deposits,
 peth.price as eth_price, pbtc.price as btc_price, 1 as tether_price, minting.lp_tokens,
@@ -204,7 +227,9 @@ select day, tricrypto2_lp_token, sum(case when tricrypto2_lp_token is not null t
 left join
 (
 select date_trunc('day', block_time), PERCENTILE_CONT(0.5) WITHIN GROUP(ORDER BY lp_token_price) as "tricrypto2_lp_token" from (
+--------------------------------------------------------------------------------------------------------------------------------------------------
 --tricrypto2 AddLiquidity events
+--------------------------------------------------------------------------------------------------------------------------------------------------
 select evt_block_time as block_time, el.evt_tx_hash as tx_hash, token_amounts[1]/10^6 as tether_deposits,
 token_amounts[2]/10^8 as wbtc_deposits, token_amounts[3]/10^18 as weth_deposits,
 peth.price as eth_price, pbtc.price as btc_price, 1 as tether_price, minting.lp_tokens,
@@ -264,7 +289,9 @@ select day, bbausd_lp_token, sum(case when bbausd_lp_token is not null then 1 en
 left join
 ( -- START prices, calculate 50th percentile per day
 select date_trunc('day', block_time), PERCENTILE_CONT(0.5) WITHIN GROUP(ORDER BY lp_token_price) as "bbausd_lp_token" from (
+--------------------------------------------------------------------------------------------------------------------------------------------------
 --BBAUSD AddLiquidity events
+--------------------------------------------------------------------------------------------------------------------------------------------------
 select el.evt_block_time as block_time, el.evt_tx_hash as tx_hash, 1 as stable_price, minting.lp_tokens,
 (deltas[1]/10^18 + deltas[2]/10^18)*1/minting.lp_tokens as lp_token_price
 from balancer_v2."Vault_evt_PoolBalanceChanged" el
@@ -288,11 +315,16 @@ on day_series.day = prices.date_trunc
 order by 1 asc
 ),
 
-
---All Element Add/Remove Liquidity Events
+--------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------
+-- SECTION THREE: All Element Add/Remove Liquidity Events
+--------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------
 
 liquidity_data as (
+--------------------------------------------------------------------------------------------------------------------------------------------------
 --Dai Pools (ePyvDAI-16OCT21,eYyvDAI-16OCT21,ePyvDAI-28JAN22,eYyvDAI-28JAN22,ePyvDAI-29APR22,eYyvDAI-29APR22)
+--------------------------------------------------------------------------------------------------------------------------------------------------
 select evt_block_time, evt_block_number, et."from" as liquidity_provider, bv."liquidityProvider" as liquidityProvider, 'ePyvDAI-16OCT21' as e_asset, 'LPePyvDAI-16OCT21' as lp_token,
 deltas[1]/10^18 as deposit_size_base, deltas[1]/10^18*dai_prices.dai_price as deposit_size_base_usd, deltas[2]/10^18 as deposit_size_e_asset,
 case when el."topic2" = '\x0000000000000000000000000000000000000000000000000000000000000000' then bytea2numericpy(substring(el.data FROM 1 FOR 32))/10^18 else bytea2numericpy(substring(el.data FROM 1 FOR 32))*-1/10^18 end as lp_tokens_acquired,
@@ -509,8 +541,11 @@ on date_trunc('minute', evt_block_time) = peth.minute
 where "poolId" = '\x7f4a33dee068c4fa012d64677c61519a578dfa35000200000000000000000346'
 and deltas[2] <> 0
 union all
+
+--------------------------------------------------------------------------------------------------------------------------------------------------
 --USDC Pools (ePyvUSDC-29OCT21,eYyvUSDC-29OCT21,ePyvUSDC-28JAN22,eYyvUSDC-28JAN22,ePyvUSDC-29APR22,eYyvUSDC-29APR22,ePyvUSDC-16SEP22)
-select evt_block_time, evt_block_number, et."from" as liquidity_provider, bv."liquidityProvider" as liquidityProvider, 'ePyvUSDC-29OCT21' as e_asset, 'LPePyvUSDC-29OCT21' as lp_token,
+--------------------------------------------------------------------------------------------------------------------------------------------------
+select evt_block_time, evt_block_number, et."from" as liquidity_provider, bv."liquidityProvider", 'ePyvUSDC-29OCT21' as e_asset, 'LPePyvUSDC-29OCT21' as lp_token,
 deltas[1]/10^6 as deposit_size_base, deltas[1]/10^6*usdc_prices.usdc_price as deposit_size_base_usd, deltas[2]/10^6 as deposit_size_e_asset,
 case when el."topic2" = '\x0000000000000000000000000000000000000000000000000000000000000000' then bytea2numericpy(substring(el.data FROM 1 FOR 32))/10^18 else bytea2numericpy(substring(el.data FROM 1 FOR 32))*-1/10^18 end as lp_tokens_acquired,
 case when et."type" = 'DynamicFee' then (eb.base_fee_per_gas+et.max_priority_fee_per_gas)*et.gas_used/10^18 else (et.gas_price*et.gas_used)/10^18 end as tx_fee_eth,
@@ -537,8 +572,8 @@ on date_trunc('minute', evt_block_time) = peth.minute
 where "poolId" = '\x787546bf2c05e3e19e2b6bde57a203da7f682eff00020000000000000000007c'
 and deltas[1] <> 0
 union all
-select evt_block_time, evt_block_number, et."from" as liquidity_provider, bv."liquidityProvider" as liquidityProvider, 'eYyvUSDC-29OCT21' as e_asset, 'LPeYyvUSDC-29OCT21' as lp_token,
-deltas[2]/10^6 as deposit_size_base, deltas[2]/10^6*usdc_prices.usdc_price as deposit_size_base_usd, deltas[1]/10^6 as deposit_size_e_asset,
+select evt_block_time, evt_block_number, et."from" as liquidity_provider, bv."liquidityProvider", 'eYyvUSDC-29OCT21' as e_asset, 'LPeYyvUSDC-29OCT21' as lp_token,
+deltas[1]/10^6 as deposit_size_base, deltas[1]/10^6*usdc_prices.usdc_price as deposit_size_base_usd, deltas[2]/10^6 as deposit_size_e_asset,
 case when el."topic2" = '\x0000000000000000000000000000000000000000000000000000000000000000' then bytea2numericpy(substring(el.data FROM 1 FOR 32))/10^18 else bytea2numericpy(substring(el.data FROM 1 FOR 32))*-1/10^18 end as lp_tokens_acquired,
 case when et."type" = 'DynamicFee' then (eb.base_fee_per_gas+et.max_priority_fee_per_gas)*et.gas_used/10^18 else (et.gas_price*et.gas_used)/10^18 end as tx_fee_eth,
 case when et."type" = 'DynamicFee' then (eb.base_fee_per_gas+et.max_priority_fee_per_gas)*et.gas_used/10^18*peth.price else (et.gas_price*et.gas_used)/10^18*peth.price end as tx_fee_usd,
@@ -562,10 +597,10 @@ on usdc_prices.minute = date_trunc('minute', evt_block_time)
 left join (select * from prices.usd where symbol = 'WETH') peth
 on date_trunc('minute', evt_block_time) = peth.minute
 where "poolId" = '\x2d6e3515c8b47192ca3913770fa741d3c4dac35400020000000000000000007b'
-and deltas[2] <> 0
+and deltas[1] <> 0
 union all
-select evt_block_time, evt_block_number, et."from" as liquidity_provider, bv."liquidityProvider" as liquidityProvider, 'ePyvUSDC-28JAN22' as e_asset, 'LPePyvUSDC-28JAN22' as lp_token,
-deltas[2]/10^6 as deposit_size_base, deltas[2]/10^6*usdc_prices.usdc_price as deposit_size_base_usd, deltas[1]/10^6 as deposit_size_e_asset,
+select evt_block_time, evt_block_number, et."from" as liquidity_provider, bv."liquidityProvider", 'ePyvUSDC-28JAN22' as e_asset, 'LPePyvUSDC-28JAN22' as lp_token,
+deltas[1]/10^6 as deposit_size_base, deltas[1]/10^6*usdc_prices.usdc_price as deposit_size_base_usd, deltas[2]/10^6 as deposit_size_e_asset,
 case when el."topic2" = '\x0000000000000000000000000000000000000000000000000000000000000000' then bytea2numericpy(substring(el.data FROM 1 FOR 32))/10^18 else bytea2numericpy(substring(el.data FROM 1 FOR 32))*-1/10^18 end as lp_tokens_acquired,
 case when et."type" = 'DynamicFee' then (eb.base_fee_per_gas+et.max_priority_fee_per_gas)*et.gas_used/10^18 else (et.gas_price*et.gas_used)/10^18 end as tx_fee_eth,
 case when et."type" = 'DynamicFee' then (eb.base_fee_per_gas+et.max_priority_fee_per_gas)*et.gas_used/10^18*peth.price else (et.gas_price*et.gas_used)/10^18*peth.price end as tx_fee_usd,
@@ -589,9 +624,9 @@ on usdc_prices.minute = date_trunc('minute', evt_block_time)
 left join (select * from prices.usd where symbol = 'WETH') peth
 on date_trunc('minute', evt_block_time) = peth.minute
 where "poolId" = '\x10a2f8bd81ee2898d7ed18fb8f114034a549fa59000200000000000000000090'
-and deltas[2] <> 0
+and deltas[1] <> 0
 union all
-select evt_block_time, evt_block_number, et."from" as liquidity_provider, bv."liquidityProvider" as liquidityProvider, 'eYyvUSDC-28JAN22' as e_asset, 'LPeYyvUSDC-28JAN22' as lp_token,
+select evt_block_time, evt_block_number, et."from" as liquidity_provider, bv."liquidityProvider", 'eYyvUSDC-28JAN22' as e_asset, 'LPeYyvUSDC-28JAN22' as lp_token,
 deltas[1]/10^6 as deposit_size_base, deltas[1]/10^6*usdc_prices.usdc_price as deposit_size_base_usd, deltas[2]/10^6 as deposit_size_e_asset,
 case when el."topic2" = '\x0000000000000000000000000000000000000000000000000000000000000000' then bytea2numericpy(substring(el.data FROM 1 FOR 32))/10^18 else bytea2numericpy(substring(el.data FROM 1 FOR 32))*-1/10^18 end as lp_tokens_acquired,
 case when et."type" = 'DynamicFee' then (eb.base_fee_per_gas+et.max_priority_fee_per_gas)*et.gas_used/10^18 else (et.gas_price*et.gas_used)/10^18 end as tx_fee_eth,
@@ -618,8 +653,8 @@ on date_trunc('minute', evt_block_time) = peth.minute
 where "poolId" = '\x9e030b67a8384cbba09d5927533aa98010c87d9100020000000000000000008f'
 and deltas[1] <> 0
 union all
-select evt_block_time, evt_block_number, et."from" as liquidity_provider, bv."liquidityProvider" as liquidityProvider, 'ePyvUSDC-17DEC21' as e_asset, 'LPePyvUSDC-17DEC21' as lp_token,
-deltas[2]/10^6 as deposit_size_base, deltas[2]/10^6*usdc_prices.usdc_price as deposit_size_base_usd, deltas[1]/10^6 as deposit_size_e_asset,
+select evt_block_time, evt_block_number, et."from" as liquidity_provider, bv."liquidityProvider", 'ePyvUSDC-17DEC21' as e_asset, 'LPePyvUSDC-17DEC21' as lp_token,
+deltas[1]/10^6 as deposit_size_base, deltas[1]/10^6*usdc_prices.usdc_price as deposit_size_base_usd, deltas[2]/10^6 as deposit_size_e_asset,
 case when el."topic2" = '\x0000000000000000000000000000000000000000000000000000000000000000' then bytea2numericpy(substring(el.data FROM 1 FOR 32))/10^18 else bytea2numericpy(substring(el.data FROM 1 FOR 32))*-1/10^18 end as lp_tokens_acquired,
 case when et."type" = 'DynamicFee' then (eb.base_fee_per_gas+et.max_priority_fee_per_gas)*et.gas_used/10^18 else (et.gas_price*et.gas_used)/10^18 end as tx_fee_eth,
 case when et."type" = 'DynamicFee' then (eb.base_fee_per_gas+et.max_priority_fee_per_gas)*et.gas_used/10^18*peth.price else (et.gas_price*et.gas_used)/10^18*peth.price end as tx_fee_usd,
@@ -643,10 +678,10 @@ on usdc_prices.minute = date_trunc('minute', evt_block_time)
 left join (select * from prices.usd where symbol = 'WETH') peth
 on date_trunc('minute', evt_block_time) = peth.minute
 where "poolId" = '\x90ca5cef5b29342b229fb8ae2db5d8f4f894d6520002000000000000000000b5'
-and deltas[2] <> 0
+and deltas[1] <> 0
 union all
-select evt_block_time, evt_block_number, et."from" as liquidity_provider, bv."liquidityProvider" as liquidityProvider, 'eYyvUSDC-17DEC21' as e_asset, 'LPeYyvUSDC-17DEC21' as lp_token,
-deltas[2]/10^6 as deposit_size_base, deltas[2]/10^6*usdc_prices.usdc_price as deposit_size_base_usd, deltas[1]/10^6 as deposit_size_e_asset,
+select evt_block_time, evt_block_number, et."from" as liquidity_provider, bv."liquidityProvider", 'eYyvUSDC-17DEC21' as e_asset, 'LPeYyvUSDC-17DEC21' as lp_token,
+deltas[1]/10^6 as deposit_size_base, deltas[1]/10^6*usdc_prices.usdc_price as deposit_size_base_usd, deltas[2]/10^6 as deposit_size_e_asset,
 case when el."topic2" = '\x0000000000000000000000000000000000000000000000000000000000000000' then bytea2numericpy(substring(el.data FROM 1 FOR 32))/10^18 else bytea2numericpy(substring(el.data FROM 1 FOR 32))*-1/10^18 end as lp_tokens_acquired,
 case when et."type" = 'DynamicFee' then (eb.base_fee_per_gas+et.max_priority_fee_per_gas)*et.gas_used/10^18 else (et.gas_price*et.gas_used)/10^18 end as tx_fee_eth,
 case when et."type" = 'DynamicFee' then (eb.base_fee_per_gas+et.max_priority_fee_per_gas)*et.gas_used/10^18*peth.price else (et.gas_price*et.gas_used)/10^18*peth.price end as tx_fee_usd,
@@ -670,10 +705,10 @@ on usdc_prices.minute = date_trunc('minute', evt_block_time)
 left join (select * from prices.usd where symbol = 'WETH') peth
 on date_trunc('minute', evt_block_time) = peth.minute
 where "poolId" = '\x7c9cf12d783821d5c63d8e9427af5c44bad924450002000000000000000000b4'
-and deltas[2] <> 0
+and deltas[1] <> 0
 union all
-select evt_block_time, evt_block_number, et."from" as liquidity_provider, bv."liquidityProvider" as liquidityProvider, 'ePyvUSDC-29APR22' as e_asset, 'LPePyvUSDC-29APR22' as lp_token,
-deltas[2]/10^6 as deposit_size_base, deltas[2]/10^6*usdc_prices.usdc_price as deposit_size_base_usd, deltas[1]/10^6 as deposit_size_e_asset,
+select evt_block_time, evt_block_number, et."from" as liquidity_provider, bv."liquidityProvider", 'ePyvUSDC-29APR22' as e_asset, 'LPePyvUSDC-29APR22' as lp_token,
+deltas[1]/10^6 as deposit_size_base, deltas[1]/10^6*usdc_prices.usdc_price as deposit_size_base_usd, deltas[2]/10^6 as deposit_size_e_asset,
 case when el."topic2" = '\x0000000000000000000000000000000000000000000000000000000000000000' then bytea2numericpy(substring(el.data FROM 1 FOR 32))/10^18 else bytea2numericpy(substring(el.data FROM 1 FOR 32))*-1/10^18 end as lp_tokens_acquired,
 case when et."type" = 'DynamicFee' then (eb.base_fee_per_gas+et.max_priority_fee_per_gas)*et.gas_used/10^18 else (et.gas_price*et.gas_used)/10^18 end as tx_fee_eth,
 case when et."type" = 'DynamicFee' then (eb.base_fee_per_gas+et.max_priority_fee_per_gas)*et.gas_used/10^18*peth.price else (et.gas_price*et.gas_used)/10^18*peth.price end as tx_fee_usd,
@@ -697,10 +732,10 @@ on usdc_prices.minute = date_trunc('minute', evt_block_time)
 left join (select * from prices.usd where symbol = 'WETH') peth
 on date_trunc('minute', evt_block_time) = peth.minute
 where "poolId" = '\x7edde0cb05ed19e03a9a47cd5e53fc57fde1c80c0002000000000000000000c8'
-and deltas[2] <> 0
+and deltas[1] <> 0
 union all
-select evt_block_time, evt_block_number, et."from" as liquidity_provider, bv."liquidityProvider" as liquidityProvider, 'eYyvUSDC-29APR22' as e_asset, 'LPeYyvUSDC-29APR22' as lp_token,
-deltas[2]/10^6 as deposit_size_base, deltas[2]/10^6*usdc_prices.usdc_price as deposit_size_base_usd, deltas[1]/10^6 as deposit_size_e_asset,
+select evt_block_time, evt_block_number, et."from" as liquidity_provider, bv."liquidityProvider", 'eYyvUSDC-29APR22' as e_asset, 'LPeYyvUSDC-29APR22' as lp_token,
+deltas[1]/10^6 as deposit_size_base, deltas[1]/10^6*usdc_prices.usdc_price as deposit_size_base_usd, deltas[2]/10^6 as deposit_size_e_asset,
 case when el."topic2" = '\x0000000000000000000000000000000000000000000000000000000000000000' then bytea2numericpy(substring(el.data FROM 1 FOR 32))/10^18 else bytea2numericpy(substring(el.data FROM 1 FOR 32))*-1/10^18 end as lp_tokens_acquired,
 case when et."type" = 'DynamicFee' then (eb.base_fee_per_gas+et.max_priority_fee_per_gas)*et.gas_used/10^18 else (et.gas_price*et.gas_used)/10^18 end as tx_fee_eth,
 case when et."type" = 'DynamicFee' then (eb.base_fee_per_gas+et.max_priority_fee_per_gas)*et.gas_used/10^18*peth.price else (et.gas_price*et.gas_used)/10^18*peth.price end as tx_fee_usd,
@@ -724,10 +759,10 @@ on usdc_prices.minute = date_trunc('minute', evt_block_time)
 left join (select * from prices.usd where symbol = 'WETH') peth
 on date_trunc('minute', evt_block_time) = peth.minute
 where "poolId" = '\x7173b184525fead2ffbde5fbe6fcb65ea8246ee70002000000000000000000c7'
-and deltas[2] <> 0
+and deltas[1] <> 0
 union all
 select evt_block_time, evt_block_number, et."from" as liquidity_provider, bv."liquidityProvider" as liquidityProvider, 'ePyvUSDC-16SEP22' as e_asset, 'LPePyvUSDC-16SEP22' as lp_token,
-deltas[2]/10^6 as deposit_size_base, deltas[2]/10^6*usdc_prices.usdc_price as deposit_size_base_usd, deltas[1]/10^6 as deposit_size_e_asset,
+deltas[1]/10^6 as deposit_size_base, deltas[1]/10^6*usdc_prices.usdc_price as deposit_size_base_usd, deltas[2]/10^6 as deposit_size_e_asset,
 case when el."topic2" = '\x0000000000000000000000000000000000000000000000000000000000000000' then bytea2numericpy(substring(el.data FROM 1 FOR 32))/10^18 else bytea2numericpy(substring(el.data FROM 1 FOR 32))*-1/10^18 end as lp_tokens_acquired,
 case when et."type" = 'DynamicFee' then (eb.base_fee_per_gas+et.max_priority_fee_per_gas)*et.gas_used/10^18 else (et.gas_price*et.gas_used)/10^18 end as tx_fee_eth,
 case when et."type" = 'DynamicFee' then (eb.base_fee_per_gas+et.max_priority_fee_per_gas)*et.gas_used/10^18*peth.price else (et.gas_price*et.gas_used)/10^18*peth.price end as tx_fee_usd,
@@ -751,10 +786,10 @@ on usdc_prices.minute = date_trunc('minute', evt_block_time)
 left join (select * from prices.usd where symbol = 'WETH') peth
 on date_trunc('minute', evt_block_time) = peth.minute
 where "poolId" = '\x56df5ef1a0a86c2a5dd9cc001aa8152545bdbdec000200000000000000000168'
-and deltas[2] <> 0
+and deltas[1] <> 0
 union all
-select evt_block_time, evt_block_number, et."from" as liquidity_provider, bv."liquidityProvider" as liquidityProvider, 'ePyvUSDC-24FEB23' as e_asset, 'LPePyvUSDC-24FEB23' as lp_token,
-deltas[2]/10^6 as deposit_size_base, deltas[2]/10^6*usdc_prices.usdc_price as deposit_size_base_usd, deltas[1]/10^6 as deposit_size_e_asset,
+select evt_block_time, evt_block_number, et."from" as liquidity_provider, bv."liquidityProvider", 'ePyvUSDC-24FEB23' as e_asset, 'LPePyvUSDC-24FEB23' as lp_token,
+deltas[1]/10^6 as deposit_size_base, deltas[1]/10^6*usdc_prices.usdc_price as deposit_size_base_usd, deltas[2]/10^6 as deposit_size_e_asset,
 case when el."topic2" = '\x0000000000000000000000000000000000000000000000000000000000000000' then bytea2numericpy(substring(el.data FROM 1 FOR 32))/10^18 else bytea2numericpy(substring(el.data FROM 1 FOR 32))*-1/10^18 end as lp_tokens_acquired,
 case when et."type" = 'DynamicFee' then (eb.base_fee_per_gas+et.max_priority_fee_per_gas)*et.gas_used/10^18 else (et.gas_price*et.gas_used)/10^18 end as tx_fee_eth,
 case when et."type" = 'DynamicFee' then (eb.base_fee_per_gas+et.max_priority_fee_per_gas)*et.gas_used/10^18*peth.price else (et.gas_price*et.gas_used)/10^18*peth.price end as tx_fee_usd,
@@ -778,9 +813,12 @@ on usdc_prices.minute = date_trunc('minute', evt_block_time)
 left join (select * from prices.usd where symbol = 'WETH') peth
 on date_trunc('minute', evt_block_time) = peth.minute
 where "poolId" = '\x5746afd392b13946aacbda40317751db27d8b91800020000000000000000034c'
-and deltas[2] <> 0
+and deltas[1] <> 0
 union all
+
+----------------------------------------------------------------------------------------
 --WBTC Pools (ePyvWBTC-26NOV21,eYyvWBTC-26NOV21,ePyvWBTC-29APR22,eYyvWBTC-29APR22)
+----------------------------------------------------------------------------------------
 select evt_block_time, evt_block_number, et."from" as liquidity_provider, bv."liquidityProvider" as liquidityProvider, 'ePyvWBTC-26NOV21' as e_asset, 'LPePyvWBTC-26NOV21' as lp_token,
 deltas[1]/10^8 as deposit_size_base, deltas[1]/10^8*wbtc_prices.wbtc_price as deposit_size_base_usd, deltas[2]/10^8 as deposit_size_e_asset,
 case when el."topic2" = '\x0000000000000000000000000000000000000000000000000000000000000000' then bytea2numericpy(substring(el.data FROM 1 FOR 32))/10^18 else bytea2numericpy(substring(el.data FROM 1 FOR 32))*-1/10^18 end as lp_tokens_acquired,
@@ -889,7 +927,10 @@ on date_trunc('minute', evt_block_time) = peth.minute
 where "poolId" = '\xcf354603a9aebd2ff9f33e1b04246d8ea204ae950002000000000000000000eb'
 and deltas[1] <> 0
 union all
+
+--------------------------------------------------------------------------------------------------------------------------------------------------
 --steCRV Pools (ePyvcrvSTETH-15OCT21,eYyvcrvSTETH-15OCT21,ePyvcrvSTETH-28JAN22,eYyvcrvSTETH-28JAN22,ePyvcrvSTETH-15APR22,eYyvcrvSTETH-15APR22)
+--------------------------------------------------------------------------------------------------------------------------------------------------
 select evt_block_time, evt_block_number, et."from" as liquidity_provider, bv."liquidityProvider" as liquidityProvider, 'ePyvcrvSTETH-15OCT21' as e_asset, 'LPePyvcrvSTETH-15OCT21' as lp_token,
 deltas[1]/10^18 as deposit_size_base, deltas[1]/10^18*steth_lp_prices.steth_lp_token as deposit_size_base_usd, deltas[2]/10^18 as deposit_size_e_asset,
 case when el."topic2" = '\x0000000000000000000000000000000000000000000000000000000000000000' then bytea2numericpy(substring(el.data FROM 1 FOR 32))/10^18 else bytea2numericpy(substring(el.data FROM 1 FOR 32))*-1/10^18 end as lp_tokens_acquired,
@@ -1106,7 +1147,10 @@ on date_trunc('minute', evt_block_time) = peth.minute
 where "poolId" = '\x07f589ea6b789249c83992dd1ed324c3b80fd06b00020000000000000000034e'
 and deltas[1] <> 0
 union all
+
+--------------------------------------------------------------------------------------------------------------------------------------------------
 --lusd3crv-f Pools (ePyvCurveLUSD-28SEP21,eYyvCurveLUSD-28SEP21,ePyvCurveLUSD-27DEC21,eYyvCurveLUSD-27DEC21,ePyvCurveLUSD-29APR22,eYyvCurveLUSD-29APR22)
+--------------------------------------------------------------------------------------------------------------------------------------------------
 select evt_block_time, evt_block_number, et."from" as liquidity_provider, bv."liquidityProvider" as liquidityProvider, 'ePyvCurveLUSD-28SEP21' as e_asset, 'LPePyvCurveLUSD-28SEP21' as lp_token,
 deltas[2]/10^18 as deposit_size_base, deltas[2]/10^18*lusd_lp_prices.lusd_lp_token as deposit_size_base_usd, deltas[1]/10^18 as deposit_size_e_asset,
 case when el."topic2" = '\x0000000000000000000000000000000000000000000000000000000000000000' then bytea2numericpy(substring(el.data FROM 1 FOR 32))/10^18 else bytea2numericpy(substring(el.data FROM 1 FOR 32))*-1/10^18 end as lp_tokens_acquired,
@@ -1296,7 +1340,10 @@ on date_trunc('minute', evt_block_time) = peth.minute
 where "poolId" = '\x489eedb33f82574afeabb3f4e156fbf662308ada0002000000000000000001a3'
 and deltas[2] <> 0
 union all
+
+--------------------------------------------------------------------------------------------------------------------------------------------------
 --alusd3crv-f Pools (ePyvCurve-alUSD-28JAN22,eYyvCurve-alUSD-28JAN22)
+--------------------------------------------------------------------------------------------------------------------------------------------------
 select evt_block_time, evt_block_number, et."from" as liquidity_provider, bv."liquidityProvider" as liquidityProvider, 'ePyvCurve-alUSD-28JAN22' as e_asset, 'LPePyvCurve-alUSD-28JAN22' as lp_token,
 deltas[1]/10^18 as deposit_size_base, deltas[1]/10^18*alusd_lp_prices.alusd_lp_token as deposit_size_base_usd, deltas[2]/10^18 as deposit_size_e_asset,
 case when el."topic2" = '\x0000000000000000000000000000000000000000000000000000000000000000' then bytea2numericpy(substring(el.data FROM 1 FOR 32))/10^18 else bytea2numericpy(substring(el.data FROM 1 FOR 32))*-1/10^18 end as lp_tokens_acquired,
@@ -1432,7 +1479,10 @@ on date_trunc('minute', evt_block_time) = peth.minute
 where "poolId" = '\x13cf9e8115f35828a26062b6c05a56c72f54e0c60002000000000000000001d9'
 and deltas[1] <> 0
 union all
+
+--------------------------------------------------------------------------------------------------------------------------------------------------
 --mim-3lp3crv-f Pools (ePyvCurve-MIM-11FEB22,eYyvCurve-MIM-11FEB22,ePyvCurve-MIM-29APR22,eYyvCurve-MIM-29APR22)
+--------------------------------------------------------------------------------------------------------------------------------------------------
 select evt_block_time, evt_block_number, et."from" as liquidity_provider, bv."liquidityProvider" as liquidityProvider, 'ePyvCurve-MIM-11FEB22' as e_asset, 'LPePyvCurve-MIM-11FEB22' as lp_token,
 deltas[2]/10^18 as deposit_size_base, deltas[2]/10^18*mim_lp_prices.mim_lp_token as deposit_size_base_usd, deltas[1]/10^18 as deposit_size_e_asset,
 case when el."topic2" = '\x0000000000000000000000000000000000000000000000000000000000000000' then bytea2numericpy(substring(el.data FROM 1 FOR 32))/10^18 else bytea2numericpy(substring(el.data FROM 1 FOR 32))*-1/10^18 end as lp_tokens_acquired,
@@ -1541,7 +1591,10 @@ on date_trunc('minute', evt_block_time) = peth.minute
 where "poolId" = '\x6fe95fafe2f86158c77bf18350672d360bfc78a20002000000000000000000bd'
 and deltas[1] <> 0
 union all
+
+--------------------------------------------------------------------------------------------------------------------------------------------------
 --eurscrv Pools (ePyvCurve-EURS-11FEB22,eYyvCurve-EURS-11FEB22)
+--------------------------------------------------------------------------------------------------------------------------------------------------
 select evt_block_time, evt_block_number, et."from" as liquidity_provider, bv."liquidityProvider" as liquidityProvider, 'ePyvCurve-EURS-11FEB22' as e_asset, 'LPePyvCurve-EURS-11FEB22' as lp_token,
 deltas[1]/10^18 as deposit_size_base, deltas[1]/10^18*eurs_lp_prices.eurs_lp_token as deposit_size_base_usd, deltas[2]/10^18 as deposit_size_e_asset,
 case when el."topic2" = '\x0000000000000000000000000000000000000000000000000000000000000000' then bytea2numericpy(substring(el.data FROM 1 FOR 32))/10^18 else bytea2numericpy(substring(el.data FROM 1 FOR 32))*-1/10^18 end as lp_tokens_acquired,
@@ -1596,7 +1649,10 @@ on date_trunc('minute', evt_block_time) = peth.minute
 where "poolId" = '\x5fa3ce1fb47bc8a29b5c02e2e7167799bbaf5f410002000000000000000000a7'
 and deltas[1] <> 0
 union all
+
+--------------------------------------------------------------------------------------------------------------------------------------------------
 --crvtricrypto Pools (ePyvCrvTriCrypto-15AUG21,eYyvCrvTriCrypto-15AUG21)
+--------------------------------------------------------------------------------------------------------------------------------------------------
 select evt_block_time, evt_block_number, et."from" as liquidity_provider, bv."liquidityProvider" as liquidityProvider, 'ePyvCrvTriCrypto-15AUG21' as e_asset, 'LPePyvCrvTriCrypto-15AUG21' as lp_token,
 deltas[2]/10^18 as deposit_size_base, deltas[2]/10^18*tricrypto_lp_prices.tricrypto_lp_token as deposit_size_base_usd, deltas[1]/10^18 as deposit_size_e_asset,
 case when el."topic2" = '\x0000000000000000000000000000000000000000000000000000000000000000' then bytea2numericpy(substring(el.data FROM 1 FOR 32))/10^18 else bytea2numericpy(substring(el.data FROM 1 FOR 32))*-1/10^18 end as lp_tokens_acquired,
@@ -1651,7 +1707,10 @@ on date_trunc('minute', evt_block_time) = peth.minute
 where "poolId" = '\xf94a7df264a2ec8bceef2cfe54d7ca3f6c6dfc7a000200000000000000000064'
 and deltas[2] <> 0
 union all
+
+--------------------------------------------------------------------------------------------------------------------------------------------------
 --crv3crypto Pools (ePyvcrv3crypto-12NOV21,eYyvcrv3crypto-12NOV21,ePyvcrv3crypto-29APR22,eYyvcrv3crypto-29APR22)
+--------------------------------------------------------------------------------------------------------------------------------------------------
 select evt_block_time, evt_block_number, et."from" as liquidity_provider, bv."liquidityProvider" as liquidityProvider, 'ePyvcrv3crypto-12NOV21' as e_asset, 'LPePyvcrv3crypto-12NOV21' as lp_token,
 deltas[2]/10^18 as deposit_size_base, deltas[2]/10^18*tricrypto2_lp_prices.tricrypto2_lp_token as deposit_size_base_usd, deltas[1]/10^18 as deposit_size_e_asset,
 case when el."topic2" = '\x0000000000000000000000000000000000000000000000000000000000000000' then bytea2numericpy(substring(el.data FROM 1 FOR 32))/10^18 else bytea2numericpy(substring(el.data FROM 1 FOR 32))*-1/10^18 end as lp_tokens_acquired,
@@ -1816,4 +1875,5 @@ and deltas[2] <> 0
 order by evt_block_time desc
 )
 
+-- convert address to varchar which is necessary for direct queries only
 select evt_block_time,evt_block_number,liquidity_provider::varchar,liquidityProvider::varchar,e_asset,lp_token,deposit_size_base,deposit_size_base_usd,deposit_size_e_asset,lp_tokens_acquired,tx_fee_eth,tx_fee_usd,evt_tx_hash::varchar,nonce,"index",tx_index from liquidity_data
