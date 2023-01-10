@@ -31,4 +31,6 @@ copy `.env.example` to `.env` and enter your details for the dune API
 
 run `dune_queries.py` and pray :pray:
 
+(new pool deployments require updates to these queries)
+
 or give us a shout

@@ -12,9 +12,24 @@ from datetime import datetime, timedelta, date
 
 from run_query import run_query
 
+CUTOFF_STARTING_DATE = "2021-01-01"
+CUTOFF_ENDING_DATE = "2022-12-31"
+
 # read from csv
 element_liquidity = pd.read_csv("./element_liquidity.csv")
 element_transfers = pd.read_csv("./element_transfers.csv")
+print(f"# of rows, liquidity: {len(element_liquidity)}, transfers: {len(element_transfers)}")
+# cut off dates
+print(f"selecting dates between {CUTOFF_STARTING_DATE} and {CUTOFF_ENDING_DATE}")
+element_liquidity = element_liquidity.loc[
+    (element_liquidity["evt_block_time"] >= CUTOFF_STARTING_DATE)
+    & (element_liquidity["evt_block_time"] <= CUTOFF_ENDING_DATE)
+]
+element_transfers = element_transfers.loc[
+    (element_transfers["block_time"] >= CUTOFF_STARTING_DATE)
+    & (element_transfers["block_time"] <= CUTOFF_ENDING_DATE)
+]
+print(f"# of rows, liquidity: {len(element_liquidity)}, transfers: {len(element_transfers)}")
 
 # fix usd value
 element_liquidity["price"] = (
