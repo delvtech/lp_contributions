@@ -13,7 +13,14 @@ install python dependencies with `pip install -r requirements.txt`
 
 if you only need data up to January 5th, use the included csv's
 
-run `python lp_distribution.py`
+if you want specific date cutoffs, adjust these lines at the top of `lp_contribution.py`:
+
+```
+CUTOFF_STARTING_DATE = "2021-01-01"
+CUTOFF_ENDING_DATE = "2022-12-31"
+```
+
+run `python lp_contribution.py`
 
 once that's done, results are stored in `lp_usd_seconds_per_user.csv`, inspect them with something like:
 
