@@ -30,6 +30,8 @@ display(results.head(10))
 display(f"total share adds up to {results['lp_usd_seconds_share'].sum()}")
 ```
 
+or use `inspect_outputs.ipynb` to run some results analysis
+
 ## updating data
 
 if you need to update data
