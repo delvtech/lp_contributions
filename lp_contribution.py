@@ -1,16 +1,14 @@
-import re
+"""Analyse relative contribution of LPs in Element Pools"""
+# standard imports
+from collections import defaultdict
+from datetime import datetime, timedelta
+
+# third party imports
 import requests
 import pandas as pd
+
+# local imports
 import psqlite as pql
-import numpy as np
-import time
-import statistics
-import json
-
-from collections import defaultdict
-from datetime import datetime, timedelta, date
-
-from run_query import run_query
 
 CUTOFF_STARTING_DATE = "2021-01-01"
 CUTOFF_ENDING_DATE = "2022-12-31"
@@ -18,9 +16,7 @@ CUTOFF_ENDING_DATE = "2022-12-31"
 # read from csv
 element_liquidity = pd.read_csv("./element_liquidity.csv")
 element_transfers = pd.read_csv("./element_transfers.csv")
-print(
-    f"# of rows, liquidity: {len(element_liquidity)}, transfers: {len(element_transfers)}"
-)
+print(f"# of rows, liquidity: {len(element_liquidity)}, transfers: {len(element_transfers)}")
 # cut off dates
 print(f"selecting dates between {CUTOFF_STARTING_DATE} and {CUTOFF_ENDING_DATE}")
 element_liquidity = element_liquidity.loc[
@@ -28,20 +24,12 @@ element_liquidity = element_liquidity.loc[
     & (element_liquidity["evt_block_time"] <= CUTOFF_ENDING_DATE)
 ]
 element_transfers = element_transfers.loc[
-    (element_transfers["block_time"] >= CUTOFF_STARTING_DATE)
-    & (element_transfers["block_time"] <= CUTOFF_ENDING_DATE)
+    (element_transfers["block_time"] >= CUTOFF_STARTING_DATE) & (element_transfers["block_time"] <= CUTOFF_ENDING_DATE)
 ]
-print(
-    f"# of rows, liquidity: {len(element_liquidity)}, transfers: {len(element_transfers)}"
-)
 
 # fix usd value
-element_liquidity["price"] = (
-    element_liquidity["deposit_size_base_usd"] / element_liquidity["deposit_size_base"]
-)
-element_liquidity["deposit_size_base_usd"] = (
-    element_liquidity["lp_tokens_acquired"] * element_liquidity["price"]
-)
+element_liquidity["price"] = element_liquidity["deposit_size_base_usd"] / element_liquidity["deposit_size_base"]
+element_liquidity["deposit_size_base_usd"] = element_liquidity["lp_tokens_acquired"] * element_liquidity["price"]
 
 # get token names
 token_names = pd.read_csv("element_tokens.csv")
@@ -65,20 +53,15 @@ for token, data in element_token_mappings["tranches"].items():
                 tokens_from_github.append(
                     {
                         "expiry_timestamp": tranche["expiration"],
-                        "expiry_datetime": datetime.fromtimestamp(
-                            tranche["expiration"]
-                        ).strftime("%Y-%m-%d %H:%M:%S"),
-                        "token_address_raw": "\\"
-                        + tranche[token_type]["address"][1:].lower(),
+                        "expiry_datetime": datetime.fromtimestamp(tranche["expiration"]).strftime("%Y-%m-%d %H:%M:%S"),
+                        "token_address_raw": "\\" + tranche[token_type]["address"][1:].lower(),
                         "token_type": "LPeP" if token_type == "ptPool" else "LPeY",
                         "poolId": "\\" + tranche[token_type]["poolId"][1:].lower(),
                     }
                 )
 tokens_from_github = pd.DataFrame(tokens_from_github)
 token_expiry = pd.merge(tokens_from_github, token_names, on="token_address_raw")
-token_expiry = token_expiry.loc[
-    :, ["token_address_raw", "token_name", "expiry_timestamp", "expiry_datetime"]
-]
+token_expiry = token_expiry.loc[:, ["token_address_raw", "token_name", "expiry_timestamp", "expiry_datetime"]]
 pql.register(token_expiry, "token_expiry")
 
 # rename liquidity data to match onchain token names
@@ -98,9 +81,7 @@ new_names = [
 for idx in range(len(old_names)):
     rows_to_replace = element_liquidity.lp_token == old_names[idx]
     element_liquidity.loc[rows_to_replace, "lp_token"] = new_names[idx]
-    print(
-        f"replaced {sum(rows_to_replace):2g} rows for {old_names[idx]:24s} with {new_names[idx]:27s}"
-    )
+    print(f"replaced {sum(rows_to_replace):2g} rows for {old_names[idx]:24s} with {new_names[idx]:27s}")
 
 # add to pql
 pql.register(element_liquidity, "liquidity")
@@ -192,9 +173,7 @@ pql.register(lp_events, "lp_events")
 listOfDoubleAddresses = list(
     set(
         (
-            lp_events.loc[
-                lp_events.address != lp_events.liquidityProvider, ["liquidityProvider"]
-            ]
+            lp_events.loc[lp_events.address != lp_events.liquidityProvider, ["liquidityProvider"]]
         ).liquidityProvider.values
     )
 )
@@ -206,17 +185,11 @@ n = 0
 for double_address in listOfDoubleAddresses:
     idxAffectedRows = lp_events.liquidityProvider == double_address
     different_rows = sum(
-        lp_events.loc[idxAffectedRows, "address"]
-        != lp_events.loc[idxAffectedRows, "liquidityProvider"]
+        lp_events.loc[idxAffectedRows, "address"] != lp_events.loc[idxAffectedRows, "liquidityProvider"]
     )
     n += different_rows
-    print(
-        f"overwriting liquidity_provider address for {double_address}"
-        f"for {different_rows} rows"
-    )
-    lp_events.loc[idxAffectedRows, "address"] = lp_events.loc[
-        idxAffectedRows, "liquidityProvider"
-    ]
+    print(f"overwriting liquidity_provider address for {double_address}" f"for {different_rows} rows")
+    lp_events.loc[idxAffectedRows, "address"] = lp_events.loc[idxAffectedRows, "liquidityProvider"]
 print(f"total affected rows replaced: {n}. nice!")
 
 # what's the most recent timestamp in the LP data? used later
@@ -230,9 +203,7 @@ def get_usd_balance_for_address(address_index, address):
     """
     usd_balance_total = 0
     for token_name in address_index[address].keys():
-        usd_balance_total += address_index[address][token_name][-1][
-            "rolling_usd_balance"
-        ]
+        usd_balance_total += address_index[address][token_name][-1]["rolling_usd_balance"]
     return usd_balance_total
 
 
@@ -289,17 +260,16 @@ def build_token_index(lp_events):
                     apply_early_bird_bonus = True
                     pool_index[token_name] = {}
                     pool_index[token_name]["usd_balance"] = usd_change
-                    pool_index[token_name][
-                        "first_deposit_datetime"
-                    ] = datetime.strptime(event_datetime, "%Y-%m-%d %H:%M:%S")
+                    pool_index[token_name]["first_deposit_datetime"] = datetime.strptime(
+                        event_datetime, "%Y-%m-%d %H:%M:%S"
+                    )
                 else:
                     elapsed_time = (
                         datetime.strptime(event_datetime, "%Y-%m-%d %H:%M:%S")
                         - pool_index[token_name]["first_deposit_datetime"]
                     )
                     if (
-                        pool_index[token_name]["usd_balance"]
-                        <= EARLY_BIRD_USD_THRESHOLD
+                        pool_index[token_name]["usd_balance"] <= EARLY_BIRD_USD_THRESHOLD
                         and elapsed_time < EARLY_BIRD_TIME_DELTA
                     ):
                         apply_early_bird_bonus = True
@@ -307,28 +277,18 @@ def build_token_index(lp_events):
                         apply_early_bird_bonus = False
                     pool_index[token_name]["usd_balance"] += usd_change
 
-                new_row["cumulative_deposits_for_pool"] = pool_index[token_name][
-                    "usd_balance"
-                ]
-                new_row["first_deposit_for_pool_datetime"] = pool_index[token_name][
-                    "first_deposit_datetime"
-                ].strftime("%Y-%m-%d %H:%M:%S")
+                new_row["cumulative_deposits_for_pool"] = pool_index[token_name]["usd_balance"]
+                new_row["first_deposit_for_pool_datetime"] = pool_index[token_name]["first_deposit_datetime"].strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                )
 
                 new_row["rolling_token_balance"] = token_change
-                new_row["rolling_usd_balance"] = (
-                    usd_change * EARLY_BIRD_BONUS
-                    if apply_early_bird_bonus
-                    else usd_change
-                )
+                new_row["rolling_usd_balance"] = usd_change * EARLY_BIRD_BONUS if apply_early_bird_bonus else usd_change
 
                 # need get_usd_balance lookup here: just because it's their first transaction for this token, doesn't mean it's their first transaction overall
-                new_row[
-                    "all_pool_usd_balance_for_address"
-                ] = get_usd_balance_for_address(address_token_index, address) + (
-                    usd_change * EARLY_BIRD_BONUS
-                    if apply_early_bird_bonus
-                    else usd_change
-                )
+                new_row["all_pool_usd_balance_for_address"] = get_usd_balance_for_address(
+                    address_token_index, address
+                ) + (usd_change * EARLY_BIRD_BONUS if apply_early_bird_bonus else usd_change)
 
             elif event_type == "withdraw":
                 print("WARNING: withdraw before receive")
@@ -370,27 +330,17 @@ def build_token_index(lp_events):
                     apply_early_bird_bonus = False
                 pool_index[token_name]["usd_balance"] += usd_change
 
-                new_row["rolling_token_balance"] = (
-                    last_row["rolling_token_balance"] + token_change
-                )
+                new_row["rolling_token_balance"] = last_row["rolling_token_balance"] + token_change
                 new_row["rolling_usd_balance"] = last_row["rolling_usd_balance"] + (
-                    usd_change * EARLY_BIRD_BONUS
-                    if apply_early_bird_bonus
-                    else usd_change
+                    usd_change * EARLY_BIRD_BONUS if apply_early_bird_bonus else usd_change
                 )
-                new_row[
-                    "all_pool_usd_balance_for_address"
-                ] = get_usd_balance_for_address(address_token_index, address) + (
-                    usd_change * EARLY_BIRD_BONUS
-                    if apply_early_bird_bonus
-                    else usd_change
-                )
+                new_row["all_pool_usd_balance_for_address"] = get_usd_balance_for_address(
+                    address_token_index, address
+                ) + (usd_change * EARLY_BIRD_BONUS if apply_early_bird_bonus else usd_change)
 
             elif event_type == "withdraw":
 
-                new_row["rolling_token_balance"] = (
-                    last_row["rolling_token_balance"] + token_change
-                )
+                new_row["rolling_token_balance"] = last_row["rolling_token_balance"] + token_change
 
                 # token change is explicitly negative in a withdraw
                 if last_row["rolling_token_balance"] == 0:
@@ -399,27 +349,22 @@ def build_token_index(lp_events):
                     bad_address_zero_balance.append(address)
                     usd_balance_withdrawn = 0
                 else:
-                    usd_balance_withdrawn = (
-                        token_change / last_row["rolling_token_balance"]
-                    ) * last_row["rolling_usd_balance"]
+                    usd_balance_withdrawn = (token_change / last_row["rolling_token_balance"]) * last_row[
+                        "rolling_usd_balance"
+                    ]
                     new_row["usd_change"] = usd_balance_withdrawn  # for tracking only
 
                 # so we add to decrement
-                new_row["rolling_usd_balance"] = (
-                    last_row["rolling_usd_balance"] + usd_balance_withdrawn
-                )
+                new_row["rolling_usd_balance"] = last_row["rolling_usd_balance"] + usd_balance_withdrawn
 
                 new_row["all_pool_usd_balance_for_address"] = (
-                    get_usd_balance_for_address(address_token_index, address)
-                    + usd_balance_withdrawn
+                    get_usd_balance_for_address(address_token_index, address) + usd_balance_withdrawn
                 )
 
             elif event_type == "send":
 
                 # calculate the new token balance since some tokens have been sent
-                new_row["rolling_token_balance"] = (
-                    last_row["rolling_token_balance"] + token_change
-                )
+                new_row["rolling_token_balance"] = last_row["rolling_token_balance"] + token_change
 
                 # calculate the dollar equivalency of the sent tokens
                 if last_row["rolling_token_balance"] == 0:
@@ -428,18 +373,15 @@ def build_token_index(lp_events):
                     bad_address_zero_balance.append(address)
                     usd_balance_sent = 0
                 else:
-                    usd_balance_sent = (
-                        token_change / last_row["rolling_token_balance"]
-                    ) * last_row["rolling_usd_balance"]
+                    usd_balance_sent = (token_change / last_row["rolling_token_balance"]) * last_row[
+                        "rolling_usd_balance"
+                    ]
                     new_row["usd_change"] = usd_balance_sent  # for tracking only
 
                 # calculate the new usd balance
-                new_row["rolling_usd_balance"] = (
-                    last_row["rolling_usd_balance"] + usd_balance_sent
-                )
+                new_row["rolling_usd_balance"] = last_row["rolling_usd_balance"] + usd_balance_sent
                 new_row["all_pool_usd_balance_for_address"] = (
-                    get_usd_balance_for_address(address_token_index, address)
-                    + usd_balance_sent
+                    get_usd_balance_for_address(address_token_index, address) + usd_balance_sent
                 )
 
                 # construct a new row for the 'receive' event
@@ -456,9 +398,7 @@ def build_token_index(lp_events):
                 if token_name not in address_token_index[receiver_address]:
 
                     # set the relevant new balances
-                    receiver_row[
-                        "rolling_token_balance"
-                    ] = -token_change  # TODO: check this sign
+                    receiver_row["rolling_token_balance"] = -token_change  # TODO: check this sign
                     receiver_row["rolling_usd_balance"] = -usd_balance_sent
 
                     receiver_row["all_pool_usd_balance_for_address"] = -usd_balance_sent
@@ -470,47 +410,32 @@ def build_token_index(lp_events):
                 else:
 
                     # then we have existing knowledge of its balances, which we must update
-                    last_receiver_row = address_token_index[receiver_address][
-                        token_name
-                    ][-1]
+                    last_receiver_row = address_token_index[receiver_address][token_name][-1]
 
                     # TODO: check this sign
-                    receiver_row["rolling_token_balance"] = (
-                        last_receiver_row["rolling_token_balance"] - token_change
-                    )
-                    receiver_row["rolling_usd_balance"] = (
-                        last_receiver_row["rolling_usd_balance"] - usd_balance_sent
-                    )
+                    receiver_row["rolling_token_balance"] = last_receiver_row["rolling_token_balance"] - token_change
+                    receiver_row["rolling_usd_balance"] = last_receiver_row["rolling_usd_balance"] - usd_balance_sent
 
                     receiver_row["all_pool_usd_balance_for_address"] = (
-                        get_usd_balance_for_address(address_token_index, address)
-                        - usd_balance_sent
+                        get_usd_balance_for_address(address_token_index, address) - usd_balance_sent
                     )
 
-                    address_token_index[receiver_address][token_name].append(
-                        receiver_row
-                    )
+                    address_token_index[receiver_address][token_name].append(receiver_row)
 
             # we always track the cumulative deposits into the pool, the first deposit datetime, and append the new row to the index
-            new_row["cumulative_deposits_for_pool"] = pool_index[token_name][
-                "usd_balance"
-            ]
-            new_row["first_deposit_for_pool_datetime"] = pool_index[token_name][
-                "first_deposit_datetime"
-            ].strftime("%Y-%m-%d %H:%M:%S")
+            new_row["cumulative_deposits_for_pool"] = pool_index[token_name]["usd_balance"]
+            new_row["first_deposit_for_pool_datetime"] = pool_index[token_name]["first_deposit_datetime"].strftime(
+                "%Y-%m-%d %H:%M:%S"
+            )
 
             address_token_index[address][token_name].append(new_row)
     return (address_token_index, bad_address, bad_address_zero_balance)
 
 
-address_token_index, bad_address, bad_address_zero_balance = build_token_index(
-    lp_events
-)
+address_token_index, bad_address, bad_address_zero_balance = build_token_index(lp_events)
 if len(bad_address_zero_balance) > 0:
     print("bad addresses with zero balance: \n", bad_address_zero_balance)
-    pd.DataFrame(bad_address_zero_balance).to_csv(
-        "bad_address_zero_balance.csv", index=False, header=False
-    )
+    pd.DataFrame(bad_address_zero_balance).to_csv("bad_address_zero_balance.csv", index=False, header=False)
 
 # reconstitute events from the index into a table
 lp_events_usd_credit = pd.DataFrame(
@@ -641,14 +566,11 @@ pre_normalization AS (
 
 actions_with_today = pql.q(actions_with_today_query.format(max_datetime))
 pql.register(actions_with_today, "actions_with_today")
-lp_usd_seconds_per_user = pql.q(
-    lp_usd_seconds_per_user_query.format(text="effective_date")
-)
+lp_usd_seconds_per_user = pql.q(lp_usd_seconds_per_user_query.format(text="effective_date"))
 pql.register(lp_usd_seconds_per_user, "lp_usd_seconds_per_user")
 
-lp_usd_seconds_per_user.lp_usd_seconds_share = (
+lp_usd_seconds_per_user.lp_usd_seconds_share = lp_usd_seconds_per_user.lp_usd_seconds_share / sum(
     lp_usd_seconds_per_user.lp_usd_seconds_share
-    / sum(lp_usd_seconds_per_user.lp_usd_seconds_share)
 )
 print(
     f"total share of lp_usd_seconds adds up to {lp_usd_seconds_per_user.lp_usd_seconds_share.sum()}"
