@@ -20,6 +20,12 @@ CUTOFF_STARTING_DATE = "2021-01-01"
 CUTOFF_ENDING_DATE = "2022-12-31"
 ```
 
+If you want to look only at specific pools, fill in your desired pools just below that. Valid token names are found in `element_tokens.csv`. For example:
+
+```
+POOL_OVERRIDE = {"LPePyvCrvTriCrypto-15AUG21", "LPeYyvCrvTriCrypto-15AUG21"}
+```
+
 run `python lp_contribution.py`
 
 once that's done, results are stored in `lp_usd_seconds_per_user.csv`, inspect them with something like:
