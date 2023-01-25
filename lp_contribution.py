@@ -12,6 +12,9 @@ import psqlite as pql
 
 CUTOFF_STARTING_DATE = "2021-01-01"
 CUTOFF_ENDING_DATE = "2022-12-31"
+# if you want to only look at specific pools, add them here, otherwise everything in element_tokens.csv will be used
+POOL_OVERRIDE = None
+# POOL_OVERRIDE = {"LPePyvCrvTriCrypto-15AUG21", "LPeYyvCrvTriCrypto-15AUG21"}
 
 # read from csv
 element_liquidity = pd.read_csv("./element_liquidity.csv")
@@ -31,7 +34,7 @@ element_transfers = element_transfers.loc[
 element_liquidity["price"] = element_liquidity["deposit_size_base_usd"] / element_liquidity["deposit_size_base"]
 element_liquidity["deposit_size_base_usd"] = element_liquidity["lp_tokens_acquired"] * element_liquidity["price"]
 
-# get token names
+# get token names from csv
 token_names = pd.read_csv("element_tokens.csv")
 # add token name to element transfers
 element_transfers = pd.merge(
@@ -42,7 +45,7 @@ element_transfers = pd.merge(
     right_on="token_address_raw",
 ).rename(columns={"token_name": "token"})
 
-# token mappings
+# use token mappings from Element Finance's github repo to get expiry dates
 contract_url = "https://raw.githubusercontent.com/element-fi/elf-deploy/main/addresses/mainnet.json"
 element_token_mappings = requests.get(contract_url).json()
 tokens_from_github = []
@@ -82,6 +85,20 @@ for idx in range(len(old_names)):
     rows_to_replace = element_liquidity.lp_token == old_names[idx]
     element_liquidity.loc[rows_to_replace, "lp_token"] = new_names[idx]
     print(f"replaced {sum(rows_to_replace):2g} rows for {old_names[idx]:24s} with {new_names[idx]:27s}")
+
+if POOL_OVERRIDE is not None:
+    print(f"overriding pools to include only {POOL_OVERRIDE} as per user input in lp_contribution.py")
+    idx_liquidity = element_liquidity["lp_token"].isin(POOL_OVERRIDE)
+    idx_transfers = element_transfers["token"].isin(POOL_OVERRIDE)
+    n_pools_excl = element_liquidity.loc[~idx_liquidity, "lp_token"].nunique()
+    element_liquidity = element_liquidity.loc[idx_liquidity]
+    element_transfers = element_transfers.loc[idx_transfers]
+    n_pools_left = element_liquidity.loc[idx_liquidity, "lp_token"].nunique()
+    print(f"filtered out {sum(~idx_liquidity)} LP events and {sum(~idx_transfers)} transfers from {n_pools_excl} pools")
+    print(f"left with {sum(idx_liquidity)} LP events and {sum(idx_transfers)} transfers from {n_pools_left} pools")
+    earliest_date = min(list(element_liquidity["evt_block_time"]) + list(element_transfers["block_time"].values))
+    latest_date = max(list(element_liquidity["evt_block_time"]) + list(element_transfers["block_time"]))
+    print(f"for this data our earliest event is {earliest_date} and latest event is {latest_date}")
 
 # add to pql
 pql.register(element_liquidity, "liquidity")

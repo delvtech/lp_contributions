@@ -1,44 +1,4 @@
 token_address_raw,token_name,long_name
-\x2260fac5e5542a773aa44fbcfedf7c193bc2c599,WBTC,Wrapped BTC
-\x43b4fdfd4ff969587185cdb6f0bd875c5fc83f8c,alUSD3CRV-f,Curve.fi Factory USD Metapool: Alchemix USD
-\x5a6a4d54456819380173272a5e8e9b9904bdf41b,MIM-3LP3CRV-f,Curve.fi Factory USD Metapool: Magic Internet Money 3Pool
-\xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48,USDC,USD Coin
-\xed279fdd11ca84beef15af5d39bb4d4bee23f0ca,LUSD3CRV-f,Curve.fi Factory USD Metapool: Liquity
-\xa13a9247ea42d743238089903570127dda72fe44,bb-a-USD,Balancer Aave Boosted StablePool
-\x6b175474e89094c44da98b954eedeac495271d0f,DAI,Dai Stablecoin
-\xca3d75ac011bf5ad07a98d02f18225f9bd9a6bdf,crvTricrypto,Curve.fi USD-BTC-ETH
-\xc4ad29ba4b3c580e6d59105fff484999997675ff,crv3crypto,Curve.fi USD-BTC-ETH
-\x06325440d014e39736583c165c2963ba99faf14e,steCRV,Curve.fi ETH/stETH
-\x194ebd173f6cdace046c53eacce9b953f28411d1,eursCRV,Curve.fi EURS/sEUR
-\x9cf2ab51ac93711ec2fa32ec861349568a16c729,ePyvcrv3crypto-12NOV21,Element Principal Token yvcrv3crypto-12NOV21
-\x285328906d0d33cb757c1e471f5e2176683247c2,ePyvcrv3crypto-29APR22,Element Principal Token yvcrv3crypto-29APR22
-\x2361102893ccabfb543bc55ac4cc8d6d0824a67e,ePyvcrvSTETH-15APR22,Element Principal Token yvcrvSTETH-15APR22
-\x26941c63f4587796abe199348ecd3d7c44f9ae0c,ePyvcrvSTETH-15OCT21,Element Principal Token yvcrvSTETH-15OCT21
-\x720465a4ae6547348056885060eeb51f9cadb571,ePyvcrvSTETH-28JAN22,Element Principal Token yvcrvSTETH-28JAN22
-\x237535da7e2f0aba1b68262abcf7c4e60b42600c,ePyvCrvTriCrypto-15AUG21,Element Principal Token yvCrvTriCrypto-15AUG21
-\x097f9f108ee0db2cb266aa16ccfb4831ec4d770b,ePyvCurve-3Crypto-16SEP22,Element Principal Token yvCurve-3Crypto-16SEP22
-\xc9b88361c09ec184bdd32cf52cffc79a1452f79d,ePyvCurve-alUSD-16SEP22,Element Principal Token yvCurve-alUSD-16SEP22
-\x55096a35bf827919b3bb0a5e6b5e2af8095f3d4d,ePyvCurve-alUSD-28JAN22,Element Principal Token yvCurve-alUSD-28JAN22
-\xeaa1cba8cc3cf01a92e9e853e90277b5b8a23e07,ePyvCurve-alUSD-29APR22,Element Principal Token yvCurve-alUSD-29APR22
-\x2a8f5649de50462ff9699ccc75a2fb0b53447503,ePyvCurve-EURS-11FEB22,Element Principal Token yvCurve-EURS-11FEB22
-\x83d392a7be901892a8c861c96ea430b8d9c2bd51,ePyvCurve-LUSD-16SEP22,Element Principal Token yvCurve-LUSD-16SEP22
-\x418de6227499181b045cadf554030722e460881a,ePyvCurve-MIM-11FEB22,Element Principal Token yvCurve-MIM-11FEB22
-\xc63958d9d01efa6b8266b1df3862c6323cbdb52b,ePyvCurve-MIM-29APR22,Element Principal Token yvCurve-MIM-29APR22
-\x21fb757c2d3a5c574e8721027c3d7a506d77b6b3,ePyvCurve-stETH-16SEP22,Element Principal Token yvCurve-stETH-16SEP22
-\xa2b3d083aa1eaa8453bfb477f062a208ed85cbbf,ePyvCurveLUSD-27DEC21,Element Principal Token yvCurveLUSD-27DEC21
-\x9b44ed798a10df31dee52c5256dcb4754bcf097e,ePyvCurveLUSD-28SEP21,Element Principal Token yvCurveLUSD-28SEP21
-\x0740a6cfb9468b8b53070c0b327099293dccb82d,ePyvCurveLUSD-29APR22,Element Principal Token yvCurveLUSD-29APR22
-\xb1cc77e701de60fe246607565cf7edc9d9b6b963,ePyvDAI-16OCT21,Element Principal Token yvDAI-16OCT21
-\xcce00da653eb50133455d4075fe8bca36750492c,ePyvDAI-16SEP22,Element Principal Token yvDAI-16SEP22
-\x449d7c2e096e9f867339078535b15440d42f78e8,ePyvDAI-28JAN22,Element Principal Token yvDAI-28JAN22
-\x2c72692e94e757679289ac85d3556b2c0f717e0e,ePyvDAI-29APR22,Element Principal Token yvDAI-29APR22
-\xcfe60a1535ecc5b0bc628dc97111c8bb01637911,ePyvUSDC-16SEP22,Element Principal Token yvUSDC-16SEP22
-\x76a34d72b9cf97d972fb0e390eb053a37f211c74,ePyvUSDC-17DEC21,Element Principal Token yvUSDC-17DEC21
-\x8a2228705ec979961f0e16df311debcf097a2766,ePyvUSDC-28JAN22,Element Principal Token yvUSDC-28JAN22
-\x52c9886d5d87b0f06ebacbeff750b5ffad5d17d9,ePyvUSDC-29APR22,Element Principal Token yvUSDC-29APR22
-\xf38c3e836be9cd35072055ff6a9ba570e0b70797,ePyvUSDC-29OCT21,Element Principal Token yvUSDC-29OCT21
-\x6bf924137e769c0a5c443dce6ec885552d31d579,ePyvWBTC-26NOV21,Element Principal Token yvWBTC-26NOV21
-\x49e9e169f0b661ea0a883f490564f4cc275123ed,ePyvWBTC-29APR22,Element Principal Token yvWBTC-29APR22
 \xf6dc4640d2783654bef88e0df3fb0f051f0dfc1a,LPePyvcrv3crypto-12NOV21,LP Element Principal Token yvcrv3crypto-12NOV21
 \x6dd0f7c8f4793ed2531c0df4fea8633a21fdcff4,LPePyvcrv3crypto-29APR22,LP Element Principal Token yvcrv3crypto-29APR22
 \xb03c6b351a283bc1cd26b9cf6d7b0c4556013bdb,LPePyvcrvSTETH-15APR22,LP Element Principal Token yvcrvSTETH-15APR22
@@ -91,11 +51,7 @@ token_address_raw,token_name,long_name
 \x2d6e3515c8b47192ca3913770fa741d3c4dac354,LPeYyvUSDC-29OCT21,LP Element Yield Token yvUSDC-29OCT21
 \x7320d680ca9bce8048a286f00a79a2c9f8dcd7b3,LPeYyvWBTC-26NOV21,LP Element Yield Token yvWBTC-26NOV21
 \xcf354603a9aebd2ff9f33e1b04246d8ea204ae95,LPeYyvWBTC-29APR22,LP Element Yield Token yvWBTC-29APR22
-\x09459654777bb2669ad8ad0b54e876d4b5ff77f4,ePyvDAI-24FEB23,Element Principal Token yvDAI-24FEB23
 \x7f4a33dee068c4fa012d64677c61519a578dfa35,LPePyvDAI-24FEB23,LP Element Principal Token yvDAI-24FEB23
-\xb83809806a076a1413437ea3e553d6bf41993a21,ePyvUSDC-24FEB23,Element Principal Token yvUSDC-24FEB23
 \x5746afd392b13946aacbda40317751db27d8b918,LPePyvUSDC-24FEB23,LP Element Principal Token yvUSDC-24FEB23
-\x724e3073317d4b1a8d0c6e89b137ea5af1f4051e,ePyvCurve-stETH-24FEB23,Element Principal Token yvCurve-stETH-24FEB23
 \x07f589ea6b789249c83992dd1ed324c3b80fd06b,LPePyvCurve-stETH-24FEB23,LP Element Principal Token yvCurve-stETH-24FEB23
-\x7e4fee0c14673db4f1526fdbea53819e5808a9b5,ePyvBalancer-BoostedAaveUSD-04MAY23,Element Principal Token yvBalancer-BoostedAaveUSD-04MAY23
 \x28b0379d98fb80da460c190c95f97c74302214b1,LPePyvBalancer-BoostedAaveUSD-04MAY23,LP Element Principal Token yvBalancer-BoostedAaveUSD-04MAY23
