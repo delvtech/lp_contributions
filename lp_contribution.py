@@ -46,7 +46,7 @@ element_transfers = pd.merge(
 ).rename(columns={"token_name": "token"})
 
 # use token mappings from Element Finance's github repo to get expiry dates
-contract_url = "https://raw.githubusercontent.com/delv-tech/elf-deploy/main/addresses/mainnet.json"
+contract_url = "https://raw.githubusercontent.com/delvtech/elf-deploy/main/addresses/mainnet.json"
 element_token_mappings = requests.get(contract_url).json()
 tokens_from_github = []
 for token, data in element_token_mappings["tranches"].items():
